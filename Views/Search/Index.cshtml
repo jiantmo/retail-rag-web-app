@@ -322,118 +322,159 @@
                     let referencesInfo = '';
                     
                     // Handle agentic search response format
-                    if (searchType === 'agentic' && typeof response.result === 'object') {
+                    if (searchType === 'agentic' && response.result) {
                         try {
+                            // The result from AgenticRetrievalService is a JSON string from Azure AI Search
                             const agenticResponse = typeof response.result === 'string' 
                                 ? JSON.parse(response.result) 
                                 : response.result;
                             
-                            // Extract the main response text
+                            console.log('Parsed agentic response:', agenticResponse);
+                            
+                            // Extract the main response text from Azure AI Search agentic format
                             if (agenticResponse.response && Array.isArray(agenticResponse.response)) {
-                                actualResult = agenticResponse.response[0]?.content?.[0]?.text || 'No response content available';
-                            } else if (typeof agenticResponse.response === 'string') {
-                                actualResult = agenticResponse.response;
+                                // Handle array of response messages
+                                const assistantMessages = agenticResponse.response.filter(r => r.role === 'assistant');
+                                if (assistantMessages.length > 0 && assistantMessages[0].content && Array.isArray(assistantMessages[0].content)) {
+                                    actualResult = assistantMessages[0].content[0]?.text || 'No response content available';
+                                } else {
+                                    actualResult = 'No assistant response found in the result';
+                                }
+                            } else if (agenticResponse.choices && Array.isArray(agenticResponse.choices)) {
+                                // Handle OpenAI-style response format
+                                actualResult = agenticResponse.choices[0]?.message?.content || 'No response content available';
+                            } else if (agenticResponse.answer || agenticResponse.text) {
+                                // Handle direct answer format
+                                actualResult = agenticResponse.answer || agenticResponse.text;
+                            } else if (typeof agenticResponse === 'string') {
+                                // If it's already a string, use it directly
+                                actualResult = agenticResponse;
                             } else {
-                                actualResult = JSON.stringify(agenticResponse.response || agenticResponse, null, 2);
+                                // Try to extract any text content
+                                const jsonStr = JSON.stringify(agenticResponse, null, 2);
+                                // Look for any text content in the JSON
+                                const textMatch = jsonStr.match(/"text"\\s*:\\s*"([^"]+)"/);
+                                if (textMatch) {
+                                    actualResult = textMatch[1];
+                                } else {
+                                    // Fall back to formatted JSON for debugging
+                                    actualResult = '<pre style="background: #f8f9fa; padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.9rem;">' + jsonStr + '</pre>';
+                                }
                             }
                             
-                            // Extract activity information
+                            // Clean up the response text
+                            if (typeof actualResult === 'string' && !actualResult.includes('<pre')) {
+                                actualResult = actualResult
+                                    .replace(/\\n/g, '<br>')
+                                    .replace(/\\"/g, '"')
+                                    .replace(/^\"|\"$/g, ''); // Remove surrounding quotes
+                            }
+                            
+                            // Extract activity information for better insights
                             if (agenticResponse.activity && Array.isArray(agenticResponse.activity)) {
-                                const planningActivities = agenticResponse.activity.filter(a => a.type === 'ModelQueryPlanning');
-                                const searchActivities = agenticResponse.activity.filter(a => a.type === 'AzureSearchQuery');
+                                const planningActivities = agenticResponse.activity.filter(a => a.type && a.type.includes('Planning'));
+                                const searchActivities = agenticResponse.activity.filter(a => a.type && a.type.includes('Search'));
                                 
-                                activityInfo = `
-                                    <div class="mt-3 p-3 bg-light rounded-3">
-                                        <h6><i class="fas fa-chart-line me-2"></i>Query Analysis</h6>
-                                        <small class="text-muted">
-                                            Query planning: ${planningActivities.length} operation(s)<br>
-                                            Search queries: ${searchActivities.length} subquerie(s)
-                                        </small>
-                                    </div>
-                                `;
+                                activityInfo = '<div class="mt-3 p-3 bg-light rounded-3">' +
+                                    '<h6><i class="fas fa-chart-line me-2"></i>Query Processing Insights</h6>' +
+                                    '<small class="text-muted">' +
+                                    'AI planning operations: ' + planningActivities.length + '<br>' +
+                                    'Search operations executed: ' + searchActivities.length + '<br>' +
+                                    'Total processing steps: ' + agenticResponse.activity.length +
+                                    '</small>' +
+                                    '</div>';
                             }
                             
                             // Extract references information
                             if (agenticResponse.references && Array.isArray(agenticResponse.references)) {
-                                referencesInfo = `
-                                    <div class="mt-3 p-3 bg-info bg-opacity-10 rounded-3">
-                                        <h6><i class="fas fa-link me-2"></i>Source References</h6>
-                                        <small class="text-muted">
-                                            Found ${agenticResponse.references.length} relevant document(s)
-                                        </small>
-                                    </div>
-                                `;
+                                const docRefs = agenticResponse.references.filter(r => r.type && r.type.includes('Document'));
+                                referencesInfo = '<div class="mt-3 p-3 bg-info bg-opacity-10 rounded-3">' +
+                                    '<h6><i class="fas fa-link me-2"></i>Knowledge Sources</h6>' +
+                                    '<small class="text-muted">' +
+                                    'Referenced ' + docRefs.length + ' document(s) from the knowledge base<br>' +
+                                    'Total sources analyzed: ' + agenticResponse.references.length +
+                                    '</small>' +
+                                    '</div>';
                             }
                         } catch (e) {
                             console.warn('Error parsing agentic response:', e);
-                            actualResult = typeof response.result === 'string' ? response.result : JSON.stringify(response.result);
+                            console.log('Raw response.result:', response.result);
+                            
+                            // If parsing fails, try to clean up the raw result
+                            if (typeof response.result === 'string') {
+                                // Try to extract readable content from the JSON string
+                                try {
+                                    const cleanResult = response.result
+                                        .replace(/\\n/g, '\n')
+                                        .replace(/\\"/g, '"')
+                                        .replace(/^\"|\"$/g, ''); // Remove surrounding quotes
+                                    
+                                    // Try to parse again after cleaning
+                                    const parsed = JSON.parse(cleanResult);
+                                    actualResult = parsed.response?.[0]?.content?.[0]?.text || cleanResult;
+                                } catch (cleanError) {
+                                    // Last resort: format as readable text
+                                    actualResult = response.result.replace(/[{}[\]"]/g, '').replace(/,/g, ',\n');
+                                }
+                            } else {
+                                actualResult = JSON.stringify(response.result, null, 2);
+                            }
                         }
                     }
                     
                     // Format the result
-                    resultContent = `
-                        <div class="card border-0 rounded-4 shadow-sm">
-                            <div class="card-body p-4">
-                                <div class="d-flex align-items-center mb-3">
-                                    <div class="bg-primary rounded-circle p-2 me-3">
-                                        <i class="fas ${searchTypeIcon} text-white"></i>
-                                    </div>
-                                    <div>
-                                        <h5 class="mb-0">AI Assistant</h5>
-                                        <small class="text-muted">${searchTypeLabel}</small>
-                                    </div>
-                                </div>
-                                
-                                <div class="search-result-content">
-                                    ${actualResult.replace(/\n/g, '<br>')}
-                                </div>
-                                
-                                ${activityInfo}
-                                ${referencesInfo}
-                                
-                                <div class="mt-4">
-                                    <small class="text-muted">
-                                        <i class="fas fa-cog me-1"></i>
-                                        Powered by Azure Cognitive Search & OpenAI GPT-4o-mini
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                    resultContent = '<div class="card border-0 rounded-4 shadow-sm">' +
+                        '<div class="card-body p-4">' +
+                        '<div class="d-flex align-items-center mb-3">' +
+                        '<div class="bg-primary rounded-circle p-2 me-3">' +
+                        '<i class="fas ' + searchTypeIcon + ' text-white"></i>' +
+                        '</div>' +
+                        '<div>' +
+                        '<h5 class="mb-0">AI Assistant</h5>' +
+                        '<small class="text-muted">' + searchTypeLabel + '</small>' +
+                        '</div>' +
+                        '</div>' +
+                        '<div class="search-result-content">' +
+                        (typeof actualResult === 'string' && !actualResult.includes('<br>') ? actualResult.replace(/\n/g, '<br>') : actualResult) +
+                        '</div>' +
+                        activityInfo +
+                        referencesInfo +
+                        '<div class="mt-4">' +
+                        '<small class="text-muted">' +
+                        '<i class="fas fa-cog me-1"></i>' +
+                        'Powered by Azure Cognitive Search & OpenAI GPT-4o-mini' +
+                        '</small>' +
+                        '</div>' +
+                        '</div>' +
+                        '</div>';
                 } else {
                     // Error case
-                    resultContent = `
-                        <div class="alert alert-warning border-0 rounded-4">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            <strong>No Results:</strong> ${response.error || 'No results found for your query.'}
-                        </div>
-                    `;
+                    resultContent = '<div class="alert alert-warning border-0 rounded-4">' +
+                        '<i class="fas fa-exclamation-triangle me-2"></i>' +
+                        '<strong>No Results:</strong> ' + (response.error || 'No results found for your query.') +
+                        '</div>';
                 }
 
                 const queryElement = document.getElementById('searchQuery');
                 const queryValue = queryElement ? queryElement.value : '';
                 
-                const resultsHtml = `
-                    <div class="search-results">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h4 class="mb-0">
-                                <i class="fas fa-search me-2"></i>
-                                ${searchTypeLabel} Results
-                            </h4>
-                            <span class="badge bg-primary rounded-pill">
-                                <i class="fas fa-clock me-1"></i>
-                                Just now
-                            </span>
-                        </div>
-                        
-                        <div class="alert alert-info border-0 rounded-4 mb-4">
-                            <i class="fas fa-quote-left me-2"></i>
-                            <strong>Query:</strong> "${queryValue}"
-                        </div>
-                        
-                        ${resultContent}
-                    </div>
-                `;
+                const resultsHtml = '<div class="search-results">' +
+                    '<div class="d-flex justify-content-between align-items-center mb-4">' +
+                    '<h4 class="mb-0">' +
+                    '<i class="fas fa-search me-2"></i>' +
+                    searchTypeLabel + ' Results' +
+                    '</h4>' +
+                    '<span class="badge bg-primary rounded-pill">' +
+                    '<i class="fas fa-clock me-1"></i>' +
+                    'Just now' +
+                    '</span>' +
+                    '</div>' +
+                    '<div class="alert alert-info border-0 rounded-4 mb-4">' +
+                    '<i class="fas fa-quote-left me-2"></i>' +
+                    '<strong>Query:</strong> "' + queryValue + '"' +
+                    '</div>' +
+                    resultContent +
+                    '</div>';
                 
                 const resultsElement = document.getElementById('searchResults');
                 if (resultsElement) {

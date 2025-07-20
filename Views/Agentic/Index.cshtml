@@ -245,22 +245,62 @@
                 try {
                     let agenticData = response.result;
                     
-                    // Parse if string
+                    // Parse if string (which is what AgenticRetrievalService returns)
                     if (typeof agenticData === 'string') {
                         agenticData = JSON.parse(agenticData);
                     }
                     
-                    // Extract main response
+                    console.log('Parsed agentic data:', agenticData);
+                    
+                    // Extract main response with better error handling
                     let mainResponse = '';
                     if (agenticData.response && Array.isArray(agenticData.response) && agenticData.response.length > 0) {
-                        const firstResponse = agenticData.response[0];
-                        if (firstResponse.content && Array.isArray(firstResponse.content) && firstResponse.content.length > 0) {
-                            mainResponse = firstResponse.content[0].text || 'No response text available';
+                        // Look for assistant role response
+                        const assistantResponse = agenticData.response.find(r => r.role === 'assistant');
+                        if (assistantResponse && assistantResponse.content && Array.isArray(assistantResponse.content)) {
+                            mainResponse = assistantResponse.content[0]?.text || 'No response text available';
+                        } else {
+                            // Fallback to first response
+                            const firstResponse = agenticData.response[0];
+                            if (firstResponse.content && Array.isArray(firstResponse.content)) {
+                                mainResponse = firstResponse.content[0]?.text || 'No response text available';
+                            } else {
+                                mainResponse = JSON.stringify(firstResponse, null, 2);
+                            }
                         }
-                    } else if (typeof agenticData.response === 'string') {
-                        mainResponse = agenticData.response;
+                    } else if (agenticData.choices && Array.isArray(agenticData.choices)) {
+                        // Handle OpenAI-style format
+                        mainResponse = agenticData.choices[0]?.message?.content || 'No response content';
+                    } else if (agenticData.answer) {
+                        // Direct answer format
+                        mainResponse = agenticData.answer;
+                    } else if (typeof agenticData === 'string') {
+                        mainResponse = agenticData;
                     } else {
-                        mainResponse = 'Response format not recognized';
+                        // Try to extract any text content from the JSON
+                        const jsonStr = JSON.stringify(agenticData, null, 2);
+                        const textMatches = jsonStr.match(/"text"\s*:\s*"([^"]+)"/g);
+                        if (textMatches && textMatches.length > 0) {
+                            mainResponse = textMatches[0].replace(/"text"\s*:\s*"([^"]+)"/, '$1');
+                        } else {
+                            mainResponse = `<div class="alert alert-info">
+                                <h6>Raw Response Data:</h6>
+                                <pre style="background: #f8f9fa; padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.9rem; white-space: pre-wrap;">${jsonStr}</pre>
+                            </div>`;
+                        }
+                    }
+                    
+                    // Clean up the response text
+                    if (typeof mainResponse === 'string' && !mainResponse.includes('<div')) {
+                        // Remove JSON artifacts and format nicely
+                        mainResponse = mainResponse
+                            .replace(/\\n/g, '\n')
+                            .replace(/\\"/g, '"')
+                            .replace(/^\s*"|"\s*$/g, '') // Remove surrounding quotes
+                            .trim();
+                        
+                        // Convert newlines to HTML breaks
+                        mainResponse = mainResponse.replace(/\n/g, '<br>');
                     }
                     
                     // Build activity information
