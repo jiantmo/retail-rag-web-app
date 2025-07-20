@@ -118,6 +118,8 @@
 
 @section Scripts {
     <script>
+        // Force cache refresh - version 2.1
+        console.log('🚀 Agentic Search JavaScript v2.1 loaded');
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded');
             
@@ -324,16 +326,24 @@
                     // Handle agentic search response format
                     if (searchType === 'agentic' && response.result) {
                         try {
+                            console.log('Raw response.result type:', typeof response.result);
+                            console.log('Raw response.result value:', response.result);
+                            
                             // The result from AgenticRetrievalService is a JSON string from Azure AI Search
                             const agenticResponse = typeof response.result === 'string' 
                                 ? JSON.parse(response.result) 
                                 : response.result;
                             
                             console.log('Parsed agentic response:', agenticResponse);
+                            console.log('Is array?', Array.isArray(agenticResponse));
+                            if (Array.isArray(agenticResponse) && agenticResponse.length > 0) {
+                                console.log('First element:', agenticResponse[0]);
+                                console.log('First element has ref_id?', agenticResponse[0].ref_id !== undefined);
+                            }
                             
-                            // Check if this is a product array format (direct search results)
-                            if (Array.isArray(agenticResponse) && agenticResponse.length > 0 && agenticResponse[0].ref_id !== undefined) {
-                                console.log('Detected product array format, formatting products...');
+                            // FORCE product formatting for any array response (temporary fix)
+                            if (Array.isArray(agenticResponse) && agenticResponse.length > 0) {
+                                console.log('🔧 FORCING product formatting for array response');
                                 // This is a product search results array
                                 actualResult = formatProductResults(agenticResponse);
                                 
