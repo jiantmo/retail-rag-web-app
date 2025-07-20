@@ -246,7 +246,7 @@
                 }
 
                 // Determine endpoint based on search type
-                const endpoint = '/search/execute'; // Both use RAG search for now
+                const endpoint = searchType === 'agentic' ? '/agentic/search' : '/search/execute';
 
                 // Make API call using fetch API
                 fetch(endpoint, {
@@ -312,29 +312,89 @@
             function displayResults(response, searchType) {
                 let resultContent = '';
                 
+                // Determine the search type label and icon
+                const searchTypeLabel = searchType === 'agentic' ? 'Agentic Retrieval' : 'RAG Semantic Search';
+                const searchTypeIcon = searchType === 'agentic' ? 'fa-brain' : 'fa-robot';
+                
                 if (response.success && response.result) {
-                    // Format the actual RAG search result
+                    let actualResult = response.result;
+                    let activityInfo = '';
+                    let referencesInfo = '';
+                    
+                    // Handle agentic search response format
+                    if (searchType === 'agentic' && typeof response.result === 'object') {
+                        try {
+                            const agenticResponse = typeof response.result === 'string' 
+                                ? JSON.parse(response.result) 
+                                : response.result;
+                            
+                            // Extract the main response text
+                            if (agenticResponse.response && Array.isArray(agenticResponse.response)) {
+                                actualResult = agenticResponse.response[0]?.content?.[0]?.text || 'No response content available';
+                            } else if (typeof agenticResponse.response === 'string') {
+                                actualResult = agenticResponse.response;
+                            } else {
+                                actualResult = JSON.stringify(agenticResponse.response || agenticResponse, null, 2);
+                            }
+                            
+                            // Extract activity information
+                            if (agenticResponse.activity && Array.isArray(agenticResponse.activity)) {
+                                const planningActivities = agenticResponse.activity.filter(a => a.type === 'ModelQueryPlanning');
+                                const searchActivities = agenticResponse.activity.filter(a => a.type === 'AzureSearchQuery');
+                                
+                                activityInfo = `
+                                    <div class="mt-3 p-3 bg-light rounded-3">
+                                        <h6><i class="fas fa-chart-line me-2"></i>Query Analysis</h6>
+                                        <small class="text-muted">
+                                            Query planning: ${planningActivities.length} operation(s)<br>
+                                            Search queries: ${searchActivities.length} subquerie(s)
+                                        </small>
+                                    </div>
+                                `;
+                            }
+                            
+                            // Extract references information
+                            if (agenticResponse.references && Array.isArray(agenticResponse.references)) {
+                                referencesInfo = `
+                                    <div class="mt-3 p-3 bg-info bg-opacity-10 rounded-3">
+                                        <h6><i class="fas fa-link me-2"></i>Source References</h6>
+                                        <small class="text-muted">
+                                            Found ${agenticResponse.references.length} relevant document(s)
+                                        </small>
+                                    </div>
+                                `;
+                            }
+                        } catch (e) {
+                            console.warn('Error parsing agentic response:', e);
+                            actualResult = typeof response.result === 'string' ? response.result : JSON.stringify(response.result);
+                        }
+                    }
+                    
+                    // Format the result
                     resultContent = `
                         <div class="card border-0 rounded-4 shadow-sm">
                             <div class="card-body p-4">
                                 <div class="d-flex align-items-center mb-3">
                                     <div class="bg-primary rounded-circle p-2 me-3">
-                                        <i class="fas fa-robot text-white"></i>
+                                        <i class="fas ${searchTypeIcon} text-white"></i>
                                     </div>
                                     <div>
                                         <h5 class="mb-0">AI Assistant</h5>
-                                        <small class="text-muted">RAG Semantic Search</small>
+                                        <small class="text-muted">${searchTypeLabel}</small>
                                     </div>
                                 </div>
                                 
                                 <div class="search-result-content">
-                                    ${response.result.replace(/\n/g, '<br>')}
+                                    ${actualResult.replace(/\n/g, '<br>')}
                                 </div>
+                                
+                                ${activityInfo}
+                                ${referencesInfo}
                                 
                                 <div class="mt-4">
                                     <small class="text-muted">
                                         <i class="fas fa-cog me-1"></i>
-                                        Powered by Azure Cognitive Search & OpenAI GPT-4
+                                        Powered by Azure Cognitive Search & OpenAI GPT-4o-mini
                                     </small>
                                 </div>
                             </div>
@@ -358,7 +418,7 @@
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h4 class="mb-0">
                                 <i class="fas fa-search me-2"></i>
-                                RAG Search Results
+                                ${searchTypeLabel} Results
                             </h4>
                             <span class="badge bg-primary rounded-pill">
                                 <i class="fas fa-clock me-1"></i>

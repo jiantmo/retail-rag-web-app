@@ -14,7 +14,7 @@ builder.Services.AddControllersWithViews()
     });
 
 // Add HttpClient service
-builder.Services.AddHttpClient();
+builder.Services.AddHttpClient<retail_rag_web_app.Services.AgenticRetrievalService>();
 
 // Register custom services
 builder.Services.AddScoped<retail_rag_web_app.Services.RagService>();

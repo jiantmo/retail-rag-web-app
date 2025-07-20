@@ -1,0 +1,611 @@
+@{
+    ViewData["Title"] = "Agentic Retrieval";
+}
+
+<div class="container-fluid p-0">
+    <!-- Hero Section -->
+    <div class="hero-section position-relative overflow-hidden">
+        <div class="container py-5">
+            <div class="row align-items-center min-vh-75">
+                <div class="col-12">
+                    <div class="text-center mb-5">
+                        <div class="hero-icon mb-4">
+                            <i class="fas fa-brain fa-3x text-primary"></i>
+                        </div>
+                        <h1 class="hero-title mb-3">
+                            Agentic <span class="text-gradient">Retrieval</span>
+                        </h1>
+                        <p class="hero-subtitle mb-4">
+                            Advanced AI-powered search with intelligent query planning and parallel retrieval
+                        </p>
+                        <div class="search-container">
+                            <form class="search-form" id="agenticSearchForm">
+                                <div class="input-group input-group-lg">
+                                    <input type="text" 
+                                           class="form-control search-input" 
+                                           id="agenticSearchQuery" 
+                                           placeholder="Ask anything about our products..." 
+                                           autocomplete="off">
+                                    <button class="btn btn-primary search-btn" type="submit" id="submitBtn">
+                                        <span class="btn-content">
+                                            <i class="fas fa-brain me-2"></i>
+                                            <div>Agentic Search</div>
+                                        </span>
+                                        <div class="btn-spinner d-none">
+                                            <i class="fas fa-spinner fa-spin me-2"></i>
+                                            <div>Analyzing...</div>
+                                        </div>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Example Queries -->
+                    <div class="example-queries mb-5">
+                        <div class="text-center mb-3">
+                            <small class="text-muted">Try these complex queries:</small>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-lg-4 col-md-6">
+                                <div class="example-query" data-query="Find me wireless headphones under $100 with good battery life and noise cancellation">
+                                    <i class="fas fa-headphones me-2"></i>
+                                    Wireless headphones under $100 with good battery and noise cancellation
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-6">
+                                <div class="example-query" data-query="What kitchen appliances would you recommend for a small apartment that are energy efficient and under $200 each?">
+                                    <i class="fas fa-blender me-2"></i>
+                                    Energy efficient kitchen appliances for small apartments under $200
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-6">
+                                <div class="example-query" data-query="Compare smartphones between $300-$600 focusing on camera quality and gaming performance">
+                                    <i class="fas fa-mobile-alt me-2"></i>
+                                    Compare smartphones $300-$600 for camera and gaming
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Background decoration -->
+        <div class="hero-decoration"></div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+        <div class="loading-content">
+            <div class="loading-spinner">
+                <i class="fas fa-brain fa-2x text-primary mb-3"></i>
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+            <h5 class="loading-text mt-3">Analyzing your query...</h5>
+            <p class="loading-subtitle text-muted">AI is breaking down your request into optimized search queries</p>
+        </div>
+    </div>
+
+    <!-- Search Results -->
+    <div class="container my-5">
+        <div id="searchResults"></div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Agentic search page loaded');
+
+        // Search form submission
+        const searchForm = document.getElementById('agenticSearchForm');
+        if (searchForm) {
+            searchForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                performAgenticSearch();
+            });
+        }
+
+        // Example query clicks
+        const exampleQueries = document.querySelectorAll('.example-query');
+        exampleQueries.forEach(query => {
+            query.addEventListener('click', function() {
+                const queryText = this.getAttribute('data-query');
+                const searchInput = document.getElementById('agenticSearchQuery');
+                if (searchInput) {
+                    searchInput.value = queryText;
+                    
+                    // Add click effect
+                    this.classList.add('clicked');
+                    setTimeout(() => this.classList.remove('clicked'), 200);
+                    
+                    // Trigger search after short delay
+                    setTimeout(() => {
+                        performAgenticSearch();
+                    }, 300);
+                }
+            });
+        });
+
+        // Enter key in search input
+        const searchInput = document.getElementById('agenticSearchQuery');
+        if (searchInput) {
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    performAgenticSearch();
+                }
+            });
+        }
+
+        function performAgenticSearch() {
+            const queryElement = document.getElementById('agenticSearchQuery');
+            const query = queryElement ? queryElement.value.trim() : '';
+            
+            if (!query) {
+                showToast('Please enter a search query', 'warning');
+                if (queryElement) queryElement.focus();
+                return;
+            }
+
+            // Show loading indicator
+            const loadingElement = document.getElementById('loadingIndicator');
+            const resultsElement = document.getElementById('searchResults');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            if (loadingElement) {
+                loadingElement.style.display = 'flex';
+            }
+            
+            if (resultsElement) {
+                resultsElement.innerHTML = '';
+            }
+
+            // Update button to show loading state
+            if (submitBtn) {
+                const btnContent = submitBtn.querySelector('.btn-content');
+                const btnSpinner = submitBtn.querySelector('.btn-spinner');
+                if (btnContent && btnSpinner) {
+                    btnContent.classList.add('d-none');
+                    btnSpinner.classList.remove('d-none');
+                }
+                submitBtn.disabled = true;
+            }
+
+            // Make API call to agentic search endpoint
+            fetch('/agentic/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ query: query })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(`HTTP ${response.status}: ${text}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Agentic search response:', data);
+                displayAgenticResults(data);
+                showToast('Agentic search completed successfully!', 'success');
+            })
+            .catch(error => {
+                console.error('Agentic search error:', error);
+                let errorMessage = 'An error occurred during agentic search. Please try again.';
+                
+                if (error.message.includes('timeout')) {
+                    errorMessage = 'Search timeout. Please try a simpler query.';
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+                
+                if (resultsElement) {
+                    resultsElement.innerHTML = `
+                        <div class="search-results">
+                            <div class="alert alert-danger border-0 rounded-4">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Agentic Search Error:</strong> ${errorMessage}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                showToast('Agentic search failed', 'error');
+            })
+            .finally(() => {
+                // Hide loading indicator and restore button
+                if (loadingElement) {
+                    loadingElement.style.display = 'none';
+                }
+                
+                if (submitBtn) {
+                    const btnContent = submitBtn.querySelector('.btn-content');
+                    const btnSpinner = submitBtn.querySelector('.btn-spinner');
+                    if (btnContent && btnSpinner) {
+                        btnContent.classList.remove('d-none');
+                        btnSpinner.classList.add('d-none');
+                    }
+                    submitBtn.disabled = false;
+                }
+            });
+        }
+
+        function displayAgenticResults(response) {
+            let resultContent = '';
+            let activityContent = '';
+            let referencesContent = '';
+            
+            if (response.success && response.result) {
+                try {
+                    let agenticData = response.result;
+                    
+                    // Parse if string
+                    if (typeof agenticData === 'string') {
+                        agenticData = JSON.parse(agenticData);
+                    }
+                    
+                    // Extract main response
+                    let mainResponse = '';
+                    if (agenticData.response && Array.isArray(agenticData.response) && agenticData.response.length > 0) {
+                        const firstResponse = agenticData.response[0];
+                        if (firstResponse.content && Array.isArray(firstResponse.content) && firstResponse.content.length > 0) {
+                            mainResponse = firstResponse.content[0].text || 'No response text available';
+                        }
+                    } else if (typeof agenticData.response === 'string') {
+                        mainResponse = agenticData.response;
+                    } else {
+                        mainResponse = 'Response format not recognized';
+                    }
+                    
+                    // Build activity information
+                    if (agenticData.activity && Array.isArray(agenticData.activity)) {
+                        const planningActivities = agenticData.activity.filter(a => a.type === 'ModelQueryPlanning');
+                        const searchActivities = agenticData.activity.filter(a => a.type === 'AzureSearchQuery');
+                        const rankerActivities = agenticData.activity.filter(a => a.type === 'AzureSearchSemanticRanker');
+                        
+                        let totalTokensUsed = 0;
+                        planningActivities.forEach(activity => {
+                            totalTokensUsed += (activity.inputTokens || 0) + (activity.outputTokens || 0);
+                        });
+                        
+                        activityContent = `
+                            <div class="row g-3 mt-3">
+                                <div class="col-md-4">
+                                    <div class="activity-card bg-primary bg-opacity-10 rounded-3 p-3">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-lightbulb text-primary me-2"></i>
+                                            <div>
+                                                <h6 class="mb-0">Query Planning</h6>
+                                                <small class="text-muted">${planningActivities.length} operation(s)</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="activity-card bg-success bg-opacity-10 rounded-3 p-3">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-search text-success me-2"></i>
+                                            <div>
+                                                <h6 class="mb-0">Parallel Search</h6>
+                                                <small class="text-muted">${searchActivities.length} subquerie(s)</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="activity-card bg-info bg-opacity-10 rounded-3 p-3">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-sort-amount-up text-info me-2"></i>
+                                            <div>
+                                                <h6 class="mb-0">Semantic Ranking</h6>
+                                                <small class="text-muted">${rankerActivities.length} operation(s)</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        if (totalTokensUsed > 0) {
+                            activityContent += `
+                                <div class="mt-3 p-3 bg-warning bg-opacity-10 rounded-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-coins text-warning me-2"></i>
+                                        <div>
+                                            <h6 class="mb-0">Tokens Used</h6>
+                                            <small class="text-muted">${totalTokensUsed.toLocaleString()} total tokens for query planning</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }
+                    
+                    // Build references information
+                    if (agenticData.references && Array.isArray(agenticData.references) && agenticData.references.length > 0) {
+                        referencesContent = `
+                            <div class="mt-4 p-3 bg-secondary bg-opacity-10 rounded-3">
+                                <h6><i class="fas fa-link me-2"></i>Source Documents</h6>
+                                <div class="row g-2">
+                        `;
+                        
+                        agenticData.references.slice(0, 6).forEach((ref, index) => {
+                            referencesContent += `
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="reference-item p-2 bg-white rounded-2 border">
+                                        <small class="text-muted">
+                                            <i class="fas fa-file-alt me-1"></i>
+                                            Document ${index + 1}
+                                        </small>
+                                        <div class="text-truncate">
+                                            <small>${ref.docKey || 'Unknown document'}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        
+                        referencesContent += `
+                                </div>
+                                <small class="text-muted mt-2 d-block">
+                                    Total references: ${agenticData.references.length}
+                                </small>
+                            </div>
+                        `;
+                    }
+                    
+                    resultContent = `
+                        <div class="card border-0 rounded-4 shadow-sm">
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="bg-primary rounded-circle p-2 me-3">
+                                        <i class="fas fa-brain text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="mb-0">Agentic AI Assistant</h5>
+                                        <small class="text-muted">Advanced Query Planning & Parallel Retrieval</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="search-result-content">
+                                    ${mainResponse.replace(/\n/g, '<br>')}
+                                </div>
+                                
+                                ${activityContent}
+                                ${referencesContent}
+                                
+                                <div class="mt-4">
+                                    <small class="text-muted">
+                                        <i class="fas fa-cog me-1"></i>
+                                        Powered by Azure AI Search Agentic Retrieval & OpenAI GPT-4o-mini
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                } catch (e) {
+                    console.error('Error parsing agentic response:', e);
+                    resultContent = `
+                        <div class="card border-0 rounded-4 shadow-sm">
+                            <div class="card-body p-4">
+                                <div class="search-result-content">
+                                    ${response.result.toString().replace(/\n/g, '<br>')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } else {
+                // Error case
+                resultContent = `
+                    <div class="alert alert-warning border-0 rounded-4">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>No Results:</strong> ${response.error || 'No results found for your query.'}
+                    </div>
+                `;
+            }
+
+            const queryElement = document.getElementById('agenticSearchQuery');
+            const queryValue = queryElement ? queryElement.value : '';
+            
+            const resultsHtml = `
+                <div class="search-results">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="mb-0">
+                            <i class="fas fa-brain me-2"></i>
+                            Agentic Retrieval Results
+                        </h4>
+                        <span class="badge bg-primary rounded-pill">
+                            <i class="fas fa-clock me-1"></i>
+                            Just now
+                        </span>
+                    </div>
+                    
+                    <div class="alert alert-info border-0 rounded-4 mb-4">
+                        <i class="fas fa-quote-left me-2"></i>
+                        <strong>Query:</strong> "${queryValue}"
+                    </div>
+                    
+                    ${resultContent}
+                </div>
+            `;
+            
+            const resultsElement = document.getElementById('searchResults');
+            if (resultsElement) {
+                resultsElement.innerHTML = resultsHtml;
+                resultsElement.style.display = 'none';
+                
+                // Fade in animation
+                setTimeout(() => {
+                    resultsElement.style.display = 'block';
+                    resultsElement.style.opacity = '0';
+                    resultsElement.style.transition = 'opacity 0.5s ease-in-out';
+                    
+                    setTimeout(() => {
+                        resultsElement.style.opacity = '1';
+                    }, 10);
+                }, 100);
+                
+                // Smooth scroll to results
+                setTimeout(() => {
+                    resultsElement.scrollIntoView({ 
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }, 200);
+            }
+        }
+        
+        function showToast(message, type) {
+            const toastHtml = `
+                <div class="toast-notification toast-${type}">
+                    <i class="fas fa-${type === 'success' ? 'check' : type === 'warning' ? 'exclamation' : 'times'} me-2"></i>
+                    ${message}
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', toastHtml);
+            
+            const toasts = document.querySelectorAll('.toast-notification');
+            const toast = toasts[toasts.length - 1];
+            
+            // Show toast
+            toast.style.display = 'block';
+            
+            // Fade in
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.3s ease-in-out';
+            setTimeout(() => {
+                toast.style.opacity = '1';
+            }, 10);
+            
+            // Fade out after 3 seconds
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
+        }
+    });
+</script>
+
+<style>
+    .activity-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .activity-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .reference-item {
+        transition: transform 0.2s ease;
+    }
+    
+    .reference-item:hover {
+        transform: translateY(-1px);
+    }
+    
+    .example-query.clicked {
+        transform: translateY(-2px) scale(0.98);
+        box-shadow: var(--shadow-heavy);
+    }
+    
+    .loading-indicator {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(5px);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .loading-content {
+        text-align: center;
+        padding: 2rem;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        max-width: 400px;
+    }
+    
+    .loading-spinner {
+        position: relative;
+    }
+    
+    .loading-spinner .spinner-border {
+        width: 3rem;
+        height: 3rem;
+    }
+    
+    .toast-notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        color: white;
+        font-weight: 500;
+        z-index: 9999;
+        box-shadow: var(--shadow-medium);
+        display: none;
+    }
+    
+    .toast-success {
+        background: linear-gradient(135deg, #28a745, #20c997);
+    }
+    
+    .toast-warning {
+        background: linear-gradient(135deg, #ffc107, #fd7e14);
+    }
+    
+    .toast-error {
+        background: linear-gradient(135deg, #dc3545, #e83e8c);
+    }
+
+    .search-result-content {
+        line-height: 1.6;
+        font-size: 1rem;
+        color: #333;
+    }
+
+    .search-result-content h1, .search-result-content h2, .search-result-content h3 {
+        color: #2563eb;
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .search-result-content p {
+        margin-bottom: 1rem;
+    }
+
+    .search-result-content ul, .search-result-content ol {
+        padding-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .search-result-content li {
+        margin-bottom: 0.5rem;
+    }
+
+    .search-result-content strong {
+        color: #1e40af;
+        font-weight: 600;
+    }
+</style>

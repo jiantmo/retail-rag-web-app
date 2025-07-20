@@ -2,6 +2,7 @@ using Azure;
 using Azure.Core;
 using Azure.Identity;
 using Azure.Search.Documents;
+using Azure.Search.Documents.Indexes;
 using Azure.Search.Documents.Models;
 using System.Text.Json;
 using dotenv.net;
@@ -37,7 +38,7 @@ namespace retail_rag_web_app.Services
 
             _indexName = Environment.GetEnvironmentVariable("AZURE_SEARCH_INDEX_NAME") 
                 ?? configuration["AZURE_SEARCH_INDEX_NAME"] 
-                ?? "rag-retail";
+                ?? "rag-acs-index";
 
             _openAIEndpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT") 
                 ?? configuration["AZURE_OPENAI_ENDPOINT"] 
@@ -60,23 +61,29 @@ namespace retail_rag_web_app.Services
                 _credential = new DefaultAzureCredential();
                 _logger.LogInformation("Using DefaultAzureCredential");
             }
+
+            _logger.LogInformation("AgenticRetrievalService initialized with endpoint: {Endpoint}, agent: {Agent}, index: {Index}", 
+                _searchEndpoint, _agentName, _indexName);
         }
 
         public async Task<string> CreateKnowledgeAgentAsync()
         {
             try
             {
+                _logger.LogInformation("Creating knowledge agent: {AgentName}", _agentName);
+
                 var agentDefinition = new
                 {
                     name = _agentName,
+                    description = "Retail product recommendation agent with advanced query planning",
                     targetIndexes = new[]
                     {
                         new
                         {
                             indexName = _indexName,
-                            defaultRerankerThreshold = 2.5,
+                            defaultRerankerThreshold = 1.5,  // Lower threshold for better recall
                             defaultIncludeReferenceSourceData = true,
-                            defaultMaxDocsForReranker = 200
+                            defaultMaxDocsForReranker = 300
                         }
                     },
                     models = new[]
@@ -87,18 +94,11 @@ namespace retail_rag_web_app.Services
                             azureOpenAIParameters = new
                             {
                                 resourceUri = _openAIEndpoint,
-                                apiKey = (string?)null,  // Use null for Azure AD authentication
                                 deploymentId = _openAIDeployment,
                                 modelName = "gpt-4o-mini"
                             }
                         }
-                    },
-                    requestLimits = new
-                    {
-                        maxOutputSize = 5000,
-                        maxRuntimeInSeconds = 60
-                    },
-                    encryptionKey = new { }
+                    }
                 };
 
                 var json = JsonSerializer.Serialize(agentDefinition, new JsonSerializerOptions
@@ -180,13 +180,47 @@ namespace retail_rag_web_app.Services
         {
             try
             {
+                _logger.LogInformation("Starting agentic retrieval for query: {Query}", userQuery);
+
                 // Ensure knowledge agent exists
                 await CheckKnowledgeAgentAsync();
 
+                // Build system prompt for retail product recommendations
+                var finalSystemPrompt = systemPrompt ?? @"
+                I am a professional retail product consultant with comprehensive access to our product database. 
+                My role is to provide personalized product recommendations based on customer needs, preferences, and budget constraints.
+
+                My approach includes:
+                1. Understanding specific customer needs and requirements
+                2. Recommending 2-3 most suitable products with clear rationale
+                3. Providing detailed product information including pricing and value analysis
+                4. Asking clarifying questions when needed
+                5. Suggesting alternatives when exact matches aren't available
+                6. For price-related queries, I carefully filter products within the specified budget range
+
+                I specialize in handling price range queries such as 'under $50', 'below $100', 'between $20-$100', 'less than $50', etc. 
+                I understand various price expressions and will find products that match the budget criteria.
+
+                I'm here to help you make informed purchasing decisions.
+                ";
+
+                // Create the retrieval request following Microsoft's agentic retrieval format
                 var retrieveRequest = new
                 {
                     messages = new[]
                     {
+                        new
+                        {
+                            role = "system",
+                            content = new[]
+                            {
+                                new
+                                {
+                                    type = "text",
+                                    text = finalSystemPrompt
+                                }
+                            }
+                        },
                         new
                         {
                             role = "user",
@@ -195,19 +229,7 @@ namespace retail_rag_web_app.Services
                                 new
                                 {
                                     type = "text",
-                                    text = (systemPrompt ?? @"I am a professional retail product consultant with comprehensive access to our product database. My role is to provide personalized product recommendations based on customer needs, preferences, and budget constraints.
-
-My approach includes:
-1. Understanding specific customer needs and requirements
-2. Recommending 2-3 most suitable products with clear rationale
-3. Providing detailed product information including pricing and value analysis
-4. Asking clarifying questions when needed
-5. Suggesting alternatives when exact matches aren't available
-6. For price-related queries, I carefully filter products within the specified budget range
-
-I specialize in handling price range queries such as 'under $50', 'below $100', 'between $20-$100', 'less than $50', etc. I understand various price expressions and will find products that match the budget criteria.
-
-I'm here to help you make informed purchasing decisions.") + "\n\nUser query: " + userQuery
+                                    text = userQuery
                                 }
                             }
                         }
@@ -218,8 +240,8 @@ I'm here to help you make informed purchasing decisions.") + "\n\nUser query: " 
                         {
                             indexName = _indexName,
                             includeReferenceSourceData = true,
-                            rerankerThreshold = 1.5,  // 降低阈值以包含更多可能相关的结果
-                            maxDocsForReranker = 300   // 增加候选文档数以提高复杂查询的召回率
+                            rerankerThreshold = 1.5,  // Lower threshold for better recall
+                            maxDocsForReranker = 300   // More candidates for complex queries
                         }
                     }
                 };
@@ -236,7 +258,7 @@ I'm here to help you make informed purchasing decisions.") + "\n\nUser query: " 
                 var tokenResult = await _credential.GetTokenAsync(new TokenRequestContext(new[] { "https://search.azure.com/.default" }), CancellationToken.None);
                 _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", tokenResult.Token);
 
-                _logger.LogInformation("Performing agentic retrieval for query: {Query}", userQuery);
+                _logger.LogInformation("Executing agentic retrieval request");
                 
                 var response = await _httpClient.PostAsync(url, content);
                 
@@ -258,7 +280,7 @@ I'm here to help you make informed purchasing decisions.") + "\n\nUser query: " 
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error in agentic retrieval");
+                _logger.LogError(ex, "Error in agentic retrieval for query: {Query}", userQuery);
                 throw;
             }
         }
