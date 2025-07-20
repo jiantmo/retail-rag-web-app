@@ -118,10 +118,10 @@
 
 @section Scripts {
     <script>
-        // Force cache refresh - version 2.1
-        console.log('🚀 Agentic Search JavaScript v2.1 loaded');
+        // Backend processing approach - version 3.0
+        console.log('🚀 Agentic Search JavaScript v3.0 loaded - Backend Processing');
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded');
+            console.log('DOM loaded - Backend processing mode enabled');
             
             // Better jQuery detection - don't require version info
             let jQueryLoaded = false;
@@ -319,132 +319,48 @@
                 const searchTypeIcon = searchType === 'agentic' ? 'fa-brain' : 'fa-robot';
                 
                 if (response.success && response.result) {
-                    let actualResult = response.result;
+                    let actualResult = '';
                     let activityInfo = '';
                     let referencesInfo = '';
                     
-                    // Handle agentic search response format
+                    // Handle the new formatted response structure from C# backend
                     if (searchType === 'agentic' && response.result) {
-                        try {
-                            console.log('Raw response.result type:', typeof response.result);
-                            console.log('Raw response.result value:', response.result);
+                        console.log('🎯 Processing formatted agentic response from C# backend');
+                        console.log('Response structure:', response.result);
+                        
+                        const formattedResult = response.result;
+                        
+                        if (formattedResult.IsProductList && formattedResult.Products && formattedResult.Products.length > 0) {
+                            console.log('📦 Displaying formatted product list:', formattedResult.Products.length, 'products');
+                            actualResult = formatBackendProducts(formattedResult.Products);
                             
-                            // The result from AgenticRetrievalService is a JSON string from Azure AI Search
-                            const agenticResponse = typeof response.result === 'string' 
-                                ? JSON.parse(response.result) 
-                                : response.result;
-                            
-                            console.log('Parsed agentic response:', agenticResponse);
-                            console.log('Is array?', Array.isArray(agenticResponse));
-                            if (Array.isArray(agenticResponse) && agenticResponse.length > 0) {
-                                console.log('First element:', agenticResponse[0]);
-                                console.log('First element has ref_id?', agenticResponse[0].ref_id !== undefined);
-                            }
-                            
-                            // FORCE product formatting for any array response (temporary fix)
-                            if (Array.isArray(agenticResponse) && agenticResponse.length > 0) {
-                                console.log('🔧 FORCING product formatting for array response');
-                                // This is a product search results array
-                                actualResult = formatProductResults(agenticResponse);
+                            activityInfo = formattedResult.ActivityInfo ? 
+                                '<div class="mt-3 p-3 bg-light rounded-3">' +
+                                '<h6><i class="fas fa-chart-line me-2"></i>Search Results</h6>' +
+                                '<small class="text-muted">' + formattedResult.ActivityInfo + '</small>' +
+                                '</div>' : '';
                                 
-                                // Set activity info for product results
-                                activityInfo = '<div class="mt-3 p-3 bg-light rounded-3">' +
-                                    '<h6><i class="fas fa-chart-line me-2"></i>Search Results</h6>' +
-                                    '<small class="text-muted">' +
-                                    'Found ' + agenticResponse.length + ' relevant product(s)<br>' +
-                                    'Results ranked by relevance and similarity' +
-                                    '</small>' +
-                                    '</div>';
-                            }
-                            // Extract the main response text from Azure AI Search agentic format
-                            else if (agenticResponse.response && Array.isArray(agenticResponse.response)) {
-                                // Handle array of response messages
-                                const assistantMessages = agenticResponse.response.filter(r => r.role === 'assistant');
-                                if (assistantMessages.length > 0 && assistantMessages[0].content && Array.isArray(assistantMessages[0].content)) {
-                                    actualResult = assistantMessages[0].content[0]?.text || 'No response content available';
-                                } else {
-                                    actualResult = 'No assistant response found in the result';
-                                }
-                            } else if (agenticResponse.choices && Array.isArray(agenticResponse.choices)) {
-                                // Handle OpenAI-style response format
-                                actualResult = agenticResponse.choices[0]?.message?.content || 'No response content available';
-                            } else if (agenticResponse.answer || agenticResponse.text) {
-                                // Handle direct answer format
-                                actualResult = agenticResponse.answer || agenticResponse.text;
-                            } else if (typeof agenticResponse === 'string') {
-                                // If it's already a string, use it directly
-                                actualResult = agenticResponse;
-                            } else {
-                                // Try to extract any text content
-                                const jsonStr = JSON.stringify(agenticResponse, null, 2);
-                                // Look for any text content in the JSON
-                                const textMatch = jsonStr.match(/"text"\\s*:\\s*"([^"]+)"/);
-                                if (textMatch) {
-                                    actualResult = textMatch[1];
-                                } else {
-                                    // Fall back to formatted JSON for debugging
-                                    actualResult = '<pre style="background: #f8f9fa; padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.9rem;">' + jsonStr + '</pre>';
-                                }
-                            }
+                            referencesInfo = formattedResult.ReferencesInfo ? 
+                                '<div class="mt-3 p-3 bg-info bg-opacity-10 rounded-3">' +
+                                '<h6><i class="fas fa-link me-2"></i>Knowledge Sources</h6>' +
+                                '<small class="text-muted">' + formattedResult.ReferencesInfo + '</small>' +
+                                '</div>' : '';
+                        } else if (formattedResult.FormattedText) {
+                            console.log('📝 Displaying formatted text response');
+                            actualResult = formattedResult.FormattedText;
                             
-                            // Clean up the response text
-                            if (typeof actualResult === 'string' && !actualResult.includes('<pre') && !actualResult.includes('<div')) {
-                                actualResult = actualResult
-                                    .replace(/\\n/g, '<br>')
-                                    .replace(/\\"/g, '"')
-                                    .replace(/^\"|\"$/g, ''); // Remove surrounding quotes
-                            }
-                            
-                            // Extract activity information for better insights (if not already set)
-                            if (!activityInfo && agenticResponse.activity && Array.isArray(agenticResponse.activity)) {
-                                const planningActivities = agenticResponse.activity.filter(a => a.type && a.type.includes('Planning'));
-                                const searchActivities = agenticResponse.activity.filter(a => a.type && a.type.includes('Search'));
-                                
-                                activityInfo = '<div class="mt-3 p-3 bg-light rounded-3">' +
-                                    '<h6><i class="fas fa-chart-line me-2"></i>Query Processing Insights</h6>' +
-                                    '<small class="text-muted">' +
-                                    'AI planning operations: ' + planningActivities.length + '<br>' +
-                                    'Search operations executed: ' + searchActivities.length + '<br>' +
-                                    'Total processing steps: ' + agenticResponse.activity.length +
-                                    '</small>' +
-                                    '</div>';
-                            }
-                            
-                            // Extract references information
-                            if (agenticResponse.references && Array.isArray(agenticResponse.references)) {
-                                const docRefs = agenticResponse.references.filter(r => r.type && r.type.includes('Document'));
-                                referencesInfo = '<div class="mt-3 p-3 bg-info bg-opacity-10 rounded-3">' +
-                                    '<h6><i class="fas fa-link me-2"></i>Knowledge Sources</h6>' +
-                                    '<small class="text-muted">' +
-                                    'Referenced ' + docRefs.length + ' document(s) from the knowledge base<br>' +
-                                    'Total sources analyzed: ' + agenticResponse.references.length +
-                                    '</small>' +
-                                    '</div>';
-                            }
-                        } catch (e) {
-                            console.warn('Error parsing agentic response:', e);
-                            console.log('Raw response.result:', response.result);
-                            
-                            // If parsing fails, try to clean up the raw result
-                            if (typeof response.result === 'string') {
-                                // Try to extract readable content from the JSON string
-                                try {
-                                    const cleanResult = response.result
-                                        .replace(/\\n/g, '\n')
-                                        .replace(/\\"/g, '"')
-                                        .replace(/^\"|\"$/g, ''); // Remove surrounding quotes
-                                    
-                                    // Try to parse again after cleaning
-                                    const parsed = JSON.parse(cleanResult);
-                                    actualResult = parsed.response?.[0]?.content?.[0]?.text || cleanResult;
-                                } catch (cleanError) {
-                                    // Last resort: format as readable text
-                                    actualResult = response.result.replace(/[{}[\]"]/g, '').replace(/,/g, ',\n');
-                                }
-                            } else {
-                                actualResult = JSON.stringify(response.result, null, 2);
-                            }
+                            activityInfo = formattedResult.ActivityInfo ? 
+                                '<div class="mt-3 p-3 bg-light rounded-3">' +
+                                '<h6><i class="fas fa-chart-line me-2"></i>Query Processing</h6>' +
+                                '<small class="text-muted">' + formattedResult.ActivityInfo + '</small>' +
+                                '</div>' : '';
+                        } else {
+                            console.log('⚠️ Using fallback display for unrecognized response structure');
+                            actualResult = formattedResult.RawResponse || 'No response content available';
                         }
+                    } else {
+                        // Handle RAG search response (existing logic)
+                        actualResult = response.result;
                     }
                     
                     // Format the result
@@ -460,7 +376,7 @@
                         '</div>' +
                         '</div>' +
                         '<div class="search-result-content">' +
-                        (typeof actualResult === 'string' && !actualResult.includes('<br>') ? actualResult.replace(/\n/g, '<br>') : actualResult) +
+                        (typeof actualResult === 'string' && !actualResult.includes('<br>') && !actualResult.includes('<div') ? actualResult.replace(/\n/g, '<br>') : actualResult) +
                         '</div>' +
                         activityInfo +
                         referencesInfo +
@@ -525,6 +441,99 @@
                         });
                     }, 200);
                 }
+            }
+            
+            function formatBackendProducts(products) {
+                console.log('🏭 Formatting pre-parsed products from C# backend:', products.length);
+                
+                let html = '<div class="product-results-container">';
+                
+                products.forEach((product, index) => {
+                    try {
+                        console.log('Processing backend product:', product.Name || 'Unknown');
+                        
+                        // Use the pre-parsed data from C# backend
+                        const name = product.Name || 'Unknown Product';
+                        const price = product.Price || 0;
+                        const productNumber = product.ProductNumber || '';
+                        const description = product.Description || '';
+                        const colorInfo = product.Color || '';
+                        const sizeInfo = product.Size || '';
+                        const materialInfo = product.Material || '';
+                        const productImages = product.ImageUrls || [];
+                        
+                        // Format price
+                        const formattedPrice = price > 0 ? `$${price.toFixed(2)}` : 'Price unavailable';
+                        
+                        // Create product card with improved layout
+                        html += `
+                            <div class="product-card mb-4">
+                                <div class="row g-0">
+                                    <div class="col-md-3">
+                                        <div class="product-image-container">
+                                            ${productImages.length > 0 ? 
+                                                `<img src="/images/${productImages[0]}" alt="${name}" class="product-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                                <div class="product-placeholder" style="display: none;">
+                                                    <i class="fas fa-image"></i>
+                                                    <span>Image Not Found</span>
+                                                </div>` :
+                                                `<div class="product-placeholder">
+                                                    <i class="fas fa-box"></i>
+                                                    <span>Product</span>
+                                                </div>`
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <div class="product-details">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h5 class="product-title mb-0">${name}</h5>
+                                                <span class="product-price">${formattedPrice}</span>
+                                            </div>
+                                            
+                                            ${productNumber ? `<p class="product-number mb-2"><strong>SKU:</strong> ${productNumber}</p>` : ''}
+                                            
+                                            <p class="product-description">${description}</p>
+                                            
+                                            <div class="product-attributes">
+                                                ${colorInfo ? `<span class="attribute-badge color-badge"><i class="fas fa-palette me-1"></i>${colorInfo}</span>` : ''}
+                                                ${sizeInfo ? `<span class="attribute-badge size-badge"><i class="fas fa-expand-arrows-alt me-1"></i>Sizes: ${sizeInfo}</span>` : ''}
+                                                ${materialInfo ? `<span class="attribute-badge material-badge"><i class="fas fa-layer-group me-1"></i>${materialInfo}</span>` : ''}
+                                            </div>
+                                            
+                                            <div class="mt-3 d-flex justify-content-between align-items-center">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-star me-1"></i>
+                                                    Relevance: ${((products.length - index) / products.length * 100).toFixed(0)}%
+                                                </small>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-tag me-1"></i>
+                                                    Result #${index + 1}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                    } catch (error) {
+                        console.error('Error formatting backend product:', error, product);
+                        // Fallback for problematic products
+                        html += `
+                            <div class="product-card mb-4 border-warning">
+                                <div class="card-body">
+                                    <h6 class="text-warning"><i class="fas fa-exclamation-triangle me-2"></i>Product Data Error</h6>
+                                    <p class="text-muted">Unable to display product: ${product.Name || 'Unknown'}</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                html += '</div>';
+                console.log('✅ Backend product formatting completed, HTML length:', html.length);
+                return html;
             }
             
             function formatProductResults(products) {

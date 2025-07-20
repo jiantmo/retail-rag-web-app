@@ -5,7 +5,9 @@ using Azure.Search.Documents;
 using Azure.Search.Documents.Indexes;
 using Azure.Search.Documents.Models;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using dotenv.net;
+using retail_rag_web_app.Models;
 
 namespace retail_rag_web_app.Services
 {
@@ -173,6 +175,401 @@ namespace retail_rag_web_app.Services
             {
                 _logger.LogError(ex, "Error checking knowledge agent");
                 throw;
+            }
+        }
+
+        public async Task<AgenticSearchFormattedResponse> AgenticRetrieveFormattedAsync(string userQuery, string? systemPrompt = null)
+        {
+            try
+            {
+                _logger.LogInformation("Starting formatted agentic retrieval for query: {Query}", userQuery);
+
+                // Get raw response from Azure AI Search
+                var rawResponse = await AgenticRetrieveAsync(userQuery, systemPrompt);
+                
+                // Parse and format the response
+                var formattedResponse = ParseAndFormatResponse(rawResponse);
+                formattedResponse.RawResponse = rawResponse;
+                
+                _logger.LogInformation("Formatted agentic retrieval completed. IsProductList: {IsProductList}, ProductCount: {ProductCount}", 
+                    formattedResponse.IsProductList, formattedResponse.Products.Count);
+                
+                return formattedResponse;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in formatted agentic retrieval for query: {Query}", userQuery);
+                
+                // Return a fallback response with the error
+                return new AgenticSearchFormattedResponse
+                {
+                    IsProductList = false,
+                    FormattedText = $"Error processing search request: {ex.Message}",
+                    RawResponse = ex.ToString()
+                };
+            }
+        }
+
+        private AgenticSearchFormattedResponse ParseAndFormatResponse(string rawResponse)
+        {
+            var response = new AgenticSearchFormattedResponse();
+            
+            try
+            {
+                _logger.LogInformation("Parsing raw response (length: {Length})", rawResponse.Length);
+                
+                var jsonDocument = JsonDocument.Parse(rawResponse);
+                var root = jsonDocument.RootElement;
+                
+                _logger.LogInformation("Raw response parsed successfully");
+                
+                // Check if this is a product list response by looking for arrays with ref_id fields
+                var products = new List<ProductResult>();
+                bool foundProductArray = false;
+                
+                // Look for arrays in the response that might contain products
+                if (root.ValueKind == JsonValueKind.Array)
+                {
+                    _logger.LogInformation("Root is array with {Count} elements", root.GetArrayLength());
+                    foundProductArray = TryParseProductArray(root, products);
+                }
+                else if (root.ValueKind == JsonValueKind.Object)
+                {
+                    // Look for arrays within the object
+                    foreach (var property in root.EnumerateObject())
+                    {
+                        if (property.Value.ValueKind == JsonValueKind.Array)
+                        {
+                            _logger.LogInformation("Found array property: {PropertyName} with {Count} elements", 
+                                property.Name, property.Value.GetArrayLength());
+                            
+                            if (TryParseProductArray(property.Value, products))
+                            {
+                                foundProductArray = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // If no product array found, try to extract response text
+                    if (!foundProductArray)
+                    {
+                        response.FormattedText = ExtractResponseText(root);
+                        ExtractActivityAndReferences(root, response);
+                    }
+                }
+                
+                if (foundProductArray && products.Any())
+                {
+                    response.IsProductList = true;
+                    response.Products = products;
+                    response.ActivityInfo = $"Found {products.Count} relevant product(s) ranked by relevance and similarity";
+                    _logger.LogInformation("Successfully parsed {Count} products", products.Count);
+                }
+                else if (string.IsNullOrEmpty(response.FormattedText))
+                {
+                    // Fallback: try to extract any meaningful text from the response
+                    response.FormattedText = ExtractAnyText(rawResponse);
+                }
+                
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogError(ex, "Failed to parse JSON response");
+                response.FormattedText = "Error: Unable to parse search response. Please try a different query.";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing response");
+                response.FormattedText = $"Error processing response: {ex.Message}";
+            }
+            
+            return response;
+        }
+
+        private bool TryParseProductArray(JsonElement arrayElement, List<ProductResult> products)
+        {
+            try
+            {
+                if (arrayElement.ValueKind != JsonValueKind.Array)
+                    return false;
+                
+                bool hasProductLikeElements = false;
+                
+                foreach (var element in arrayElement.EnumerateArray())
+                {
+                    if (element.ValueKind == JsonValueKind.Object)
+                    {
+                        var hasRefId = element.TryGetProperty("ref_id", out _);
+                        var hasContent = element.TryGetProperty("content", out _);
+                        var hasTitle = element.TryGetProperty("title", out _);
+                        
+                        // Check if this looks like a product element
+                        if (hasRefId || hasContent || hasTitle)
+                        {
+                            var product = ParseProduct(element);
+                            if (product != null)
+                            {
+                                products.Add(product);
+                                hasProductLikeElements = true;
+                            }
+                        }
+                    }
+                }
+                
+                return hasProductLikeElements;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error parsing product array");
+                return false;
+            }
+        }
+
+        private ProductResult? ParseProduct(JsonElement productElement)
+        {
+            try
+            {
+                var product = new ProductResult();
+                
+                // Get basic fields
+                if (productElement.TryGetProperty("ref_id", out var refIdElement))
+                {
+                    product.RefId = refIdElement.GetString() ?? "";
+                }
+                
+                if (productElement.TryGetProperty("title", out var titleElement))
+                {
+                    product.Name = titleElement.GetString() ?? "Unknown Product";
+                }
+                
+                // Parse content field which contains detailed product info
+                if (productElement.TryGetProperty("content", out var contentElement))
+                {
+                    var content = contentElement.GetString() ?? "";
+                    ParseProductContent(content, product);
+                }
+                
+                // Only return if we have meaningful data
+                if (!string.IsNullOrEmpty(product.Name) || !string.IsNullOrEmpty(product.Description))
+                {
+                    return product;
+                }
+                
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error parsing individual product");
+                return null;
+            }
+        }
+
+        private void ParseProductContent(string content, ProductResult product)
+        {
+            try
+            {
+                // Extract basic product info using regex
+                var nameMatch = Regex.Match(content, @"Name:\s*([^;]+)", RegexOptions.IgnoreCase);
+                if (nameMatch.Success && string.IsNullOrEmpty(product.Name))
+                {
+                    product.Name = nameMatch.Groups[1].Value.Trim();
+                }
+                
+                var priceMatch = Regex.Match(content, @"Price:\s*([0-9.]+)", RegexOptions.IgnoreCase);
+                if (priceMatch.Success)
+                {
+                    if (decimal.TryParse(priceMatch.Groups[1].Value, out var price))
+                    {
+                        product.Price = price;
+                    }
+                }
+                
+                var productNumberMatch = Regex.Match(content, @"ProductNumber:\s*([^;]+)", RegexOptions.IgnoreCase);
+                if (productNumberMatch.Success)
+                {
+                    product.ProductNumber = productNumberMatch.Groups[1].Value.Trim();
+                }
+                
+                var descriptionMatch = Regex.Match(content, @"Description:\s*([^;]+)", RegexOptions.IgnoreCase);
+                if (descriptionMatch.Success)
+                {
+                    product.Description = descriptionMatch.Groups[1].Value.Trim();
+                }
+                
+                // Extract attributes
+                var colorMatches = Regex.Matches(content, @"'Name':\s*'Color'.*?'TextValue':\s*'([^']+)'", RegexOptions.IgnoreCase);
+                if (colorMatches.Count > 0)
+                {
+                    product.Color = colorMatches[0].Groups[1].Value;
+                }
+                
+                var sizeMatches = Regex.Matches(content, @"'Name':\s*'Size'.*?'TextValue':\s*'([^']+)'", RegexOptions.IgnoreCase);
+                if (sizeMatches.Count > 0)
+                {
+                    product.Size = sizeMatches[0].Groups[1].Value.Replace("|", ", ");
+                }
+                
+                var materialMatches = Regex.Matches(content, @"'Name':\s*'AW\s*(Material|Fabric)'.*?'TextValue':\s*'([^']+)'", RegexOptions.IgnoreCase);
+                if (materialMatches.Count > 0)
+                {
+                    product.Material = materialMatches[0].Groups[2].Value;
+                }
+                
+                // Extract product images
+                var imageMatches = Regex.Matches(content, @"'([^']*\.png)'", RegexOptions.IgnoreCase);
+                foreach (Match match in imageMatches)
+                {
+                    var imageUrl = match.Groups[1].Value;
+                    if (!string.IsNullOrEmpty(imageUrl) && !product.ImageUrls.Contains(imageUrl))
+                    {
+                        product.ImageUrls.Add(imageUrl);
+                    }
+                }
+                
+                _logger.LogDebug("Parsed product: {Name}, Price: {Price}, Images: {ImageCount}", 
+                    product.Name, product.Price, product.ImageUrls.Count);
+                    
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error parsing product content");
+            }
+        }
+
+        private string ExtractResponseText(JsonElement root)
+        {
+            try
+            {
+                // Try to find response text in various possible locations
+                if (root.TryGetProperty("response", out var responseArray) && responseArray.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var response in responseArray.EnumerateArray())
+                    {
+                        if (response.TryGetProperty("role", out var role) && role.GetString() == "assistant")
+                        {
+                            if (response.TryGetProperty("content", out var contentArray) && contentArray.ValueKind == JsonValueKind.Array)
+                            {
+                                foreach (var content in contentArray.EnumerateArray())
+                                {
+                                    if (content.TryGetProperty("text", out var text))
+                                    {
+                                        return text.GetString() ?? "";
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Try choices format (OpenAI style)
+                if (root.TryGetProperty("choices", out var choicesArray) && choicesArray.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var choice in choicesArray.EnumerateArray())
+                    {
+                        if (choice.TryGetProperty("message", out var message))
+                        {
+                            if (message.TryGetProperty("content", out var content))
+                            {
+                                return content.GetString() ?? "";
+                            }
+                        }
+                    }
+                }
+                
+                // Try direct answer fields
+                if (root.TryGetProperty("answer", out var answer))
+                {
+                    return answer.GetString() ?? "";
+                }
+                
+                if (root.TryGetProperty("text", out var textField))
+                {
+                    return textField.GetString() ?? "";
+                }
+                
+                return "";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error extracting response text");
+                return "";
+            }
+        }
+
+        private void ExtractActivityAndReferences(JsonElement root, AgenticSearchFormattedResponse response)
+        {
+            try
+            {
+                // Extract activity information
+                if (root.TryGetProperty("activity", out var activity) && activity.ValueKind == JsonValueKind.Array)
+                {
+                    var planningActivities = 0;
+                    var searchActivities = 0;
+                    var totalActivities = activity.GetArrayLength();
+                    
+                    foreach (var activityItem in activity.EnumerateArray())
+                    {
+                        if (activityItem.TryGetProperty("type", out var type))
+                        {
+                            var typeStr = type.GetString() ?? "";
+                            if (typeStr.Contains("Planning")) planningActivities++;
+                            if (typeStr.Contains("Search")) searchActivities++;
+                        }
+                    }
+                    
+                    response.ActivityInfo = $"AI planning operations: {planningActivities}, Search operations: {searchActivities}, Total steps: {totalActivities}";
+                }
+                
+                // Extract references information
+                if (root.TryGetProperty("references", out var references) && references.ValueKind == JsonValueKind.Array)
+                {
+                    var docRefs = 0;
+                    var totalRefs = references.GetArrayLength();
+                    
+                    foreach (var reference in references.EnumerateArray())
+                    {
+                        if (reference.TryGetProperty("type", out var type))
+                        {
+                            var typeStr = type.GetString() ?? "";
+                            if (typeStr.Contains("Document")) docRefs++;
+                        }
+                    }
+                    
+                    response.ReferencesInfo = $"Referenced {docRefs} document(s) from knowledge base, Total sources: {totalRefs}";
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error extracting activity and references");
+            }
+        }
+
+        private string ExtractAnyText(string rawResponse)
+        {
+            try
+            {
+                // Try to find any readable text in the response
+                var textMatches = Regex.Matches(rawResponse, @"""text""\s*:\s*""([^""]+)""", RegexOptions.IgnoreCase);
+                if (textMatches.Count > 0)
+                {
+                    return textMatches[0].Groups[1].Value;
+                }
+                
+                // Look for content fields
+                var contentMatches = Regex.Matches(rawResponse, @"""content""\s*:\s*""([^""]+)""", RegexOptions.IgnoreCase);
+                if (contentMatches.Count > 0)
+                {
+                    return contentMatches[0].Groups[1].Value;
+                }
+                
+                // Fallback: return truncated raw response
+                return rawResponse.Length > 500 ? rawResponse.Substring(0, 500) + "..." : rawResponse;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error extracting any text");
+                return "Unable to parse response content.";
             }
         }
 

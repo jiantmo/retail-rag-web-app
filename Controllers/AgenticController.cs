@@ -33,9 +33,10 @@ namespace retail_rag_web_app.Controllers
 
                 _logger.LogInformation("Processing agentic search query: {Query}", request.Query);
 
-                var result = await _agenticService.AgenticRetrieveAsync(request.Query, request.SystemPrompt);
+                // Use the new formatted retrieval method
+                var formattedResult = await _agenticService.AgenticRetrieveFormattedAsync(request.Query, request.SystemPrompt);
 
-                return Json(new { success = true, result = result });
+                return Json(new { success = true, result = formattedResult });
             }
             catch (Exception ex)
             {
