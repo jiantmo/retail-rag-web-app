@@ -29,14 +29,44 @@ namespace retail_rag_web_app.Controllers
             return View();
         }
 
+        [HttpGet("test")]
+        public IActionResult Test()
+        {
+            return View();
+        }
+
+        [HttpGet("simple")]
+        public IActionResult Simple()
+        {
+            return View();
+        }
+
         [HttpPost("execute")]
         public async Task<IActionResult> ExecuteSearch([FromBody] SearchRequest searchRequest)
         {
             try
             {
-                if (searchRequest == null || string.IsNullOrWhiteSpace(searchRequest.Query))
+                // Log the raw request body for debugging
+                Request.EnableBuffering();
+                var body = await new StreamReader(Request.Body).ReadToEndAsync();
+                Request.Body.Position = 0;
+                _logger.LogInformation("Raw request body: {Body}", body);
+                
+                _logger.LogInformation("Received search request. SearchRequest is null: {IsNull}", searchRequest == null);
+                
+                if (searchRequest == null)
                 {
-                    return BadRequest("Invalid search request.");
+                    _logger.LogWarning("SearchRequest object is null");
+                    return BadRequest("SearchRequest object is null.");
+                }
+                
+                _logger.LogInformation("SearchRequest Query: '{Query}', IsEmpty: {IsEmpty}", 
+                    searchRequest.Query, string.IsNullOrWhiteSpace(searchRequest.Query));
+                
+                if (string.IsNullOrWhiteSpace(searchRequest.Query))
+                {
+                    _logger.LogWarning("Query is null or empty");
+                    return BadRequest("Query is required.");
                 }
 
                 _logger.LogInformation("Processing search query: {Query}", searchRequest.Query);

@@ -15,6 +15,7 @@ namespace retail_rag_web_app.Services
         private readonly AzureOpenAIClient _openAIClient;
         private readonly ChatClient _chatClient;
         private readonly string _indexName;
+        private readonly ILogger<RagService> _logger;
         
         private readonly string GROUNDED_PROMPT = @"You are a friendly retail assistant that helps customers find products and answers their questions.
 Answer the query using only the sources provided below in a friendly and helpful manner.
@@ -24,8 +25,10 @@ Do not generate answers that don't use the sources below.
 Query: {0}
 Sources: {1}";
 
-        public RagService(IConfiguration configuration)
+        public RagService(IConfiguration configuration, ILogger<RagService> logger)
         {
+            _logger = logger;
+            
             var searchEndpoint = configuration["AZURE_SEARCH_ENDPOINT"] 
                 ?? throw new ArgumentException("AZURE_SEARCH_ENDPOINT not configured");
             var openAIEndpoint = configuration["AZURE_OPENAI_ENDPOINT"]
@@ -37,63 +40,84 @@ Sources: {1}";
             _indexName = configuration["AZURE_SEARCH_INDEX_NAME"]
                 ?? throw new ArgumentException("AZURE_SEARCH_INDEX_NAME not configured");
 
+            _logger.LogInformation("Initializing RagService with Search: {SearchEndpoint}, OpenAI: {OpenAIEndpoint}, Index: {IndexName}", 
+                searchEndpoint, openAIEndpoint, _indexName);
+
             // 使用Managed Identity或DefaultAzureCredential认证
             TokenCredential credential;
             if (!string.IsNullOrEmpty(managedIdentityClientId))
             {
+                _logger.LogInformation("Using ManagedIdentityCredential with ClientId: {ClientId}", managedIdentityClientId);
                 credential = new ManagedIdentityCredential(managedIdentityClientId);
             }
             else
             {
+                _logger.LogInformation("Using DefaultAzureCredential");
                 credential = new DefaultAzureCredential();
             }
             
             _searchClient = new SearchClient(new Uri(searchEndpoint), _indexName, credential);
             _openAIClient = new AzureOpenAIClient(new Uri(openAIEndpoint), credential);
             _chatClient = _openAIClient.GetChatClient(gptDeployment);
+            
+            _logger.LogInformation("RagService initialized successfully");
         }
 
         public async Task<string> SearchAsync(string query)
         {
             try
             {
-                // 配置搜索选项
+                _logger.LogInformation("Starting search for query: {Query}", query);
+                
+                // 基于微软官方示例的简化配置
                 var options = new SearchOptions 
                 { 
-                    Size = 5,
-                    QueryType = SearchQueryType.Simple // 使用简单查询类型
+                    Size = 5
                 };
                 
-                // 只选择实际存在的字段
-                options.Select.Add("chunk");         // 包含完整产品信息的主要字段
-                options.Select.Add("chunk_id");      // 用于调试（可选）
+                // 先测试不指定字段，让Azure Search自动选择所有可检索字段
+                _logger.LogInformation("Executing search against index: {IndexName}", _indexName);
                 
-                // 执行搜索
+                // 执行搜索 - 按照官方示例的简单格式
                 var searchResults = await _searchClient.SearchAsync<SearchDocument>(query, options);
                 var sources = new List<string>();
+
+                _logger.LogInformation("Search completed, processing results...");
 
                 await foreach (var result in searchResults.Value.GetResultsAsync())
                 {
                     var doc = result.Document;
                     
-                    // 获取chunk内容（已包含格式化的产品信息）
-                    var chunk = doc.TryGetValue("chunk", out var chunkObj) ? chunkObj?.ToString() : "";
-                    var chunkId = doc.TryGetValue("chunk_id", out var idObj) ? idObj?.ToString() : "";
+                    _logger.LogInformation("Found result with {FieldCount} fields. Score: {Score}", 
+                        doc.Count, result.Score);
                     
-                    if (!string.IsNullOrEmpty(chunk))
+                    // 记录所有可用字段（只显示前100个字符避免日志过长）
+                    foreach (var field in doc)
                     {
-                        // 解析chunk中的结构化信息
-                        var productInfo = ParseProductInfo(chunk);
-                        sources.Add(productInfo);
+                        var fieldValuePreview = field.Value?.ToString()?.Substring(0, Math.Min(100, field.Value?.ToString()?.Length ?? 0));
+                        _logger.LogInformation("Available field: {FieldName} = {FieldValue}...", 
+                            field.Key, fieldValuePreview);
+                    }
+                    
+                    // 尝试获取常见的字段并格式化为源
+                    var source = FormatDocumentAsSource(doc);
+                    if (!string.IsNullOrEmpty(source))
+                    {
+                        sources.Add(source);
+                        _logger.LogInformation("Added source with length: {SourceLength}", source.Length);
                     }
                 }
 
+                _logger.LogInformation("Total sources found: {SourceCount}", sources.Count);
+
                 if (!sources.Any())
                 {
+                    _logger.LogWarning("No sources found for query: {Query}", query);
                     return "I couldn't find any relevant information for your query. Please try rephrasing your question.";
                 }
 
                 string sourcesFormatted = string.Join("\n\n", sources);
+                _logger.LogInformation("Formatted sources length: {SourcesLength}", sourcesFormatted.Length);
 
                 // 格式化提示词
                 string formattedPrompt = string.Format(GROUNDED_PROMPT, query, sourcesFormatted);
@@ -106,13 +130,58 @@ Sources: {1}";
                 };
 
                 // 发送到OpenAI并获取响应
+                _logger.LogInformation("Sending request to OpenAI...");
                 var response = await _chatClient.CompleteChatAsync(messages);
-
+                
+                _logger.LogInformation("OpenAI response received successfully");
                 return response.Value.Content[0].Text;
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error occurred during search: {ErrorMessage}", ex.Message);
                 return $"Error occurred while processing your request: {ex.Message}";
+            }
+        }
+
+        private string FormatDocumentAsSource(SearchDocument doc)
+        {
+            try
+            {
+                var source = new System.Text.StringBuilder();
+                
+                // 尝试常见的字段名称
+                var commonFields = new[] { "chunk", "content", "text", "description", "title", "name" };
+                
+                foreach (var fieldName in commonFields)
+                {
+                    if (doc.TryGetValue(fieldName, out var fieldValue) && fieldValue != null)
+                    {
+                        var valueStr = fieldValue.ToString();
+                        if (!string.IsNullOrEmpty(valueStr))
+                        {
+                            source.AppendLine($"{fieldName}: {valueStr}");
+                        }
+                    }
+                }
+                
+                // 如果没有找到常见字段，使用所有字段
+                if (source.Length == 0)
+                {
+                    foreach (var field in doc)
+                    {
+                        if (field.Value != null && !string.IsNullOrEmpty(field.Value.ToString()))
+                        {
+                            source.AppendLine($"{field.Key}: {field.Value}");
+                        }
+                    }
+                }
+                
+                return source.ToString();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error formatting document as source");
+                return doc.ToString();
             }
         }
 
@@ -141,12 +210,8 @@ Sources: {1}";
             // 先执行搜索部分
             var options = new SearchOptions 
             { 
-                Size = 5,
-                QueryType = SearchQueryType.Simple
+                Size = 5
             };
-            
-            options.Select.Add("chunk");
-            options.Select.Add("chunk_id");
             
             var searchResults = await _searchClient.SearchAsync<SearchDocument>(query, options);
             var sources = new List<string>();
@@ -154,12 +219,11 @@ Sources: {1}";
             await foreach (var result in searchResults.Value.GetResultsAsync())
             {
                 var doc = result.Document;
-                var chunk = doc.TryGetValue("chunk", out var chunkObj) ? chunkObj?.ToString() : "";
+                var source = FormatDocumentAsSource(doc);
                 
-                if (!string.IsNullOrEmpty(chunk))
+                if (!string.IsNullOrEmpty(source))
                 {
-                    var productInfo = ParseProductInfo(chunk);
-                    sources.Add(productInfo);
+                    sources.Add(source);
                 }
             }
 
@@ -197,45 +261,6 @@ Sources: {1}";
         {
             yield return errorMessage;
             await Task.CompletedTask; // 满足async要求
-        }
-
-        private string ParseProductInfo(string chunk)
-        {
-            // chunk格式示例: "Name: Vareno Compact Surfboard; Price: 638.77; TotalRatings: 4053; Description: Designed with a rela..."
-            
-            var productInfo = new System.Text.StringBuilder();
-            productInfo.AppendLine("Product Details:");
-            
-            try
-            {
-                // 使用分号分割字段
-                var fields = chunk.Split(';', StringSplitOptions.RemoveEmptyEntries);
-                
-                foreach (var field in fields)
-                {
-                    var keyValue = field.Split(':', 2, StringSplitOptions.RemoveEmptyEntries);
-                    if (keyValue.Length == 2)
-                    {
-                        var key = keyValue[0].Trim();
-                        var value = keyValue[1].Trim();
-                        
-                        // 显示所有字段，保持原始格式
-                        productInfo.AppendLine($"• {key}: {value}");
-                    }
-                    else
-                    {
-                        // 如果没有冒号分隔符，直接显示整个字段
-                        productInfo.AppendLine($"• {field.Trim()}");
-                    }
-                }
-                
-                return productInfo.ToString();
-            }
-            catch (Exception)
-            {
-                // 如果解析失败，返回原始chunk但格式化显示
-                return $"Product Information:\n• {chunk}";
-            }
         }
     }
 }

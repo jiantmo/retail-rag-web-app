@@ -418,7 +418,18 @@
     </main>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script>
+        // Fallback to CDN if local jQuery fails
+        if (typeof window.jQuery === 'undefined') {
+            console.log('Local jQuery failed, loading from CDN...');
+            document.write('<script src="https://code.jquery.com/jquery-3.6.0.min.js"><\/script>');
+        }
+        console.log('jQuery loaded');
+    </script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        console.log('Bootstrap JS loaded');
+    </script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

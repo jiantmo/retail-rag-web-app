@@ -118,11 +118,20 @@
 
 @section Scripts {
     <script>
-        $(document).ready(function() {
-            // Check if jQuery is loaded
-            if (typeof $ === 'undefined') {
-                console.error('jQuery is not loaded!');
-                return;
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded');
+            
+            // Better jQuery detection - don't require version info
+            let jQueryLoaded = false;
+            if (typeof window.$ !== 'undefined' && window.$) {
+                jQueryLoaded = true;
+                console.log('jQuery loaded via $');
+            } else if (typeof window.jQuery !== 'undefined' && window.jQuery) {
+                window.$ = window.jQuery; // Assign jQuery to $
+                jQueryLoaded = true;
+                console.log('jQuery loaded via jQuery global');
+            } else {
+                console.log('jQuery not available, using vanilla JS only');
             }
 
             // Add typing animation to placeholder
@@ -137,110 +146,165 @@
             let placeholderIndex = 0;
             
             function animatePlaceholder() {
-                const textarea = $('#searchQuery');
-                if (textarea.length > 0) {
+                const textarea = document.getElementById('searchQuery');
+                if (textarea) {
                     const currentPlaceholder = placeholders[placeholderIndex];
-                    textarea.attr('placeholder', currentPlaceholder);
+                    textarea.setAttribute('placeholder', currentPlaceholder);
                     placeholderIndex = (placeholderIndex + 1) % placeholders.length;
                 }
             }
             
-            // Change placeholder every 3 seconds - start after a delay to ensure DOM is ready
+            // Change placeholder every 3 seconds
             setTimeout(() => {
                 setInterval(animatePlaceholder, 3000);
             }, 1000);
 
-            // Example query click handlers
-            $('.example-query').click(function() {
-                const query = $(this).data('query');
-                $('#searchQuery').val(query);
-                $('#searchQuery').focus();
-                
-                // Add ripple effect
-                $(this).addClass('clicked');
-                setTimeout(() => $(this).removeClass('clicked'), 300);
-            });
-
-            // RAG Search button click
-            $('#ragSearchBtn').click(function() {
-                performSearch('rag');
-            });
-
-            // Agentic Search button click
-            $('#agenticSearchBtn').click(function() {
-                performSearch('agentic');
-            });
-
-            // Enter key handler for textarea
-            $('#searchQuery').keydown(function(e) {
-                if (e.ctrlKey && e.keyCode === 13) { // Ctrl+Enter
-                    performSearch('rag');
-                } else if (e.shiftKey && e.keyCode === 13) { // Shift+Enter
-                    performSearch('agentic');
+            // Example query click handlers using event delegation
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('example-query')) {
+                    const query = e.target.getAttribute('data-query');
+                    const searchQuery = document.getElementById('searchQuery');
+                    if (searchQuery) {
+                        searchQuery.value = query;
+                        searchQuery.focus();
+                    }
+                    
+                    // Add ripple effect
+                    e.target.classList.add('clicked');
+                    setTimeout(() => e.target.classList.remove('clicked'), 300);
                 }
             });
 
-            // Auto-resize textarea
-            $('#searchQuery').on('input', function() {
-                this.style.height = 'auto';
-                this.style.height = Math.max(140, this.scrollHeight) + 'px';
-            });
+            // RAG Search button click
+            const ragSearchBtn = document.getElementById('ragSearchBtn');
+            if (ragSearchBtn) {
+                ragSearchBtn.addEventListener('click', function() {
+                    performSearch('rag');
+                });
+            }
+
+            // Agentic Search button click
+            const agenticSearchBtn = document.getElementById('agenticSearchBtn');
+            if (agenticSearchBtn) {
+                agenticSearchBtn.addEventListener('click', function() {
+                    performSearch('agentic');
+                });
+            }
+
+            // Enter key handler for textarea
+            const searchQuery = document.getElementById('searchQuery');
+            if (searchQuery) {
+                searchQuery.addEventListener('keydown', function(e) {
+                    if (e.ctrlKey && e.keyCode === 13) { // Ctrl+Enter
+                        performSearch('rag');
+                    } else if (e.shiftKey && e.keyCode === 13) { // Shift+Enter
+                        performSearch('agentic');
+                    }
+                });
+
+                // Auto-resize textarea
+                searchQuery.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = Math.max(140, this.scrollHeight) + 'px';
+                });
+            }
 
             function performSearch(searchType) {
-                const query = $('#searchQuery').val().trim();
+                const queryElement = document.getElementById('searchQuery');
+                const query = queryElement ? queryElement.value.trim() : '';
                 
                 if (!query) {
                     showToast('Please enter a search query', 'warning');
-                    $('#searchQuery').focus();
+                    if (queryElement) queryElement.focus();
                     return;
                 }
 
                 // Show loading indicator with animation
-                $('#loadingIndicator').fadeIn(300);
-                $('#searchResults').empty();
+                const loadingElement = document.getElementById('loadingIndicator');
+                const resultsElement = document.getElementById('searchResults');
+                
+                if (loadingElement) {
+                    loadingElement.style.display = 'block';
+                    loadingElement.style.opacity = '1';
+                }
+                
+                if (resultsElement) {
+                    resultsElement.innerHTML = '';
+                }
 
                 // Disable buttons during search
-                $('#ragSearchBtn, #agenticSearchBtn').prop('disabled', true).addClass('searching');
+                const ragBtn = document.getElementById('ragSearchBtn');
+                const agenticBtn = document.getElementById('agenticSearchBtn');
+                
+                if (ragBtn) {
+                    ragBtn.disabled = true;
+                    ragBtn.classList.add('searching');
+                }
+                if (agenticBtn) {
+                    agenticBtn.disabled = true;
+                    agenticBtn.classList.add('searching');
+                }
 
                 // Determine endpoint based on search type
                 const endpoint = '/search/execute'; // Both use RAG search for now
 
-                // Make API call
-                $.ajax({
-                    url: endpoint,
+                // Make API call using fetch API
+                fetch(endpoint, {
                     method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ query: query }),
-                    timeout: 30000, // 30 seconds
-                    success: function(response) {
-                        displayResults(response, searchType);
-                        showToast('Search completed successfully!', 'success');
+                    headers: {
+                        'Content-Type': 'application/json',
                     },
-                    error: function(xhr, status, error) {
-                        console.error('Search error:', error);
-                        let errorMessage = 'An error occurred while searching. Please try again.';
-                        
-                        if (xhr.status === timeout) {
-                            errorMessage = 'Search timeout. Please try a simpler query.';
-                        } else if (xhr.responseJSON && xhr.responseJSON.error) {
-                            errorMessage = xhr.responseJSON.error;
-                        }
-                        
-                        $('#searchResults').html(`
+                    body: JSON.stringify({ query: query })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(`HTTP ${response.status}: ${text}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Search response:', data);
+                    displayResults(data, searchType);
+                    showToast('Search completed successfully!', 'success');
+                })
+                .catch(error => {
+                    console.error('Search error:', error);
+                    let errorMessage = 'An error occurred while searching. Please try again.';
+                    
+                    if (error.message.includes('timeout')) {
+                        errorMessage = 'Search timeout. Please try a simpler query.';
+                    } else if (error.message) {
+                        errorMessage = error.message;
+                    }
+                    
+                    if (resultsElement) {
+                        resultsElement.innerHTML = `
                             <div class="search-results">
                                 <div class="alert alert-danger border-0 rounded-4">
                                     <i class="fas fa-exclamation-triangle me-2"></i>
                                     <strong>Search Error:</strong> ${errorMessage}
                                 </div>
                             </div>
-                        `);
-                        
-                        showToast('Search failed', 'error');
-                    },
-                    complete: function() {
-                        // Hide loading indicator and re-enable buttons
-                        $('#loadingIndicator').fadeOut(300);
-                        $('#ragSearchBtn, #agenticSearchBtn').prop('disabled', false).removeClass('searching');
+                        `;
+                    }
+                    
+                    showToast('Search failed', 'error');
+                })
+                .finally(() => {
+                    // Hide loading indicator and re-enable buttons
+                    if (loadingElement) {
+                        loadingElement.style.display = 'none';
+                    }
+                    
+                    if (ragBtn) {
+                        ragBtn.disabled = false;
+                        ragBtn.classList.remove('searching');
+                    }
+                    if (agenticBtn) {
+                        agenticBtn.disabled = false;
+                        agenticBtn.classList.remove('searching');
                     }
                 });
             }
@@ -286,6 +350,9 @@
                     `;
                 }
 
+                const queryElement = document.getElementById('searchQuery');
+                const queryValue = queryElement ? queryElement.value : '';
+                
                 const resultsHtml = `
                     <div class="search-results">
                         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -301,22 +368,37 @@
                         
                         <div class="alert alert-info border-0 rounded-4 mb-4">
                             <i class="fas fa-quote-left me-2"></i>
-                            <strong>Query:</strong> "${$('#searchQuery').val()}"
+                            <strong>Query:</strong> "${queryValue}"
                         </div>
                         
                         ${resultContent}
                     </div>
                 `;
                 
-                $('#searchResults').html(resultsHtml).hide().fadeIn(500);
-                
-                // Smooth scroll to results
-                setTimeout(() => {
-                    $('#searchResults')[0].scrollIntoView({ 
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }, 200);
+                const resultsElement = document.getElementById('searchResults');
+                if (resultsElement) {
+                    resultsElement.innerHTML = resultsHtml;
+                    resultsElement.style.display = 'none';
+                    
+                    // Fade in animation
+                    setTimeout(() => {
+                        resultsElement.style.display = 'block';
+                        resultsElement.style.opacity = '0';
+                        resultsElement.style.transition = 'opacity 0.5s ease-in-out';
+                        
+                        setTimeout(() => {
+                            resultsElement.style.opacity = '1';
+                        }, 10);
+                    }, 100);
+                    
+                    // Smooth scroll to results
+                    setTimeout(() => {
+                        resultsElement.scrollIntoView({ 
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }, 200);
+                }
             }
             
             function showToast(message, type) {
@@ -327,15 +409,26 @@
                     </div>
                 `;
                 
-                $('body').append(toastHtml);
+                document.body.insertAdjacentHTML('beforeend', toastHtml);
                 
-                const toast = $('.toast-notification').last();
-                toast.fadeIn(300);
+                const toasts = document.querySelectorAll('.toast-notification');
+                const toast = toasts[toasts.length - 1];
                 
+                // Fade in
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease-in-out';
                 setTimeout(() => {
-                    toast.fadeOut(300, function() {
-                        $(this).remove();
-                    });
+                    toast.style.opacity = '1';
+                }, 10);
+                
+                // Fade out after 3 seconds
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    setTimeout(() => {
+                        if (toast.parentNode) {
+                            toast.parentNode.removeChild(toast);
+                        }
+                    }, 300);
                 }, 3000);
             }
         });
