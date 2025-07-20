@@ -205,22 +205,11 @@ namespace retail_rag_web_app.Services
                 ";
 
                 // Create the retrieval request following Microsoft's agentic retrieval format
+                // Note: Azure AI Search agentic API only supports 'user' and 'assistant' roles
                 var retrieveRequest = new
                 {
                     messages = new[]
                     {
-                        new
-                        {
-                            role = "system",
-                            content = new[]
-                            {
-                                new
-                                {
-                                    type = "text",
-                                    text = finalSystemPrompt
-                                }
-                            }
-                        },
                         new
                         {
                             role = "user",
@@ -229,7 +218,7 @@ namespace retail_rag_web_app.Services
                                 new
                                 {
                                     type = "text",
-                                    text = userQuery
+                                    text = $"{finalSystemPrompt}\n\nUser Query: {userQuery}"
                                 }
                             }
                         }
