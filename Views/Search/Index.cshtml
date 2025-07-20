@@ -331,8 +331,23 @@
                             
                             console.log('Parsed agentic response:', agenticResponse);
                             
+                            // Check if this is a product array format (direct search results)
+                            if (Array.isArray(agenticResponse) && agenticResponse.length > 0 && agenticResponse[0].ref_id !== undefined) {
+                                console.log('Detected product array format, formatting products...');
+                                // This is a product search results array
+                                actualResult = formatProductResults(agenticResponse);
+                                
+                                // Set activity info for product results
+                                activityInfo = '<div class="mt-3 p-3 bg-light rounded-3">' +
+                                    '<h6><i class="fas fa-chart-line me-2"></i>Search Results</h6>' +
+                                    '<small class="text-muted">' +
+                                    'Found ' + agenticResponse.length + ' relevant product(s)<br>' +
+                                    'Results ranked by relevance and similarity' +
+                                    '</small>' +
+                                    '</div>';
+                            }
                             // Extract the main response text from Azure AI Search agentic format
-                            if (agenticResponse.response && Array.isArray(agenticResponse.response)) {
+                            else if (agenticResponse.response && Array.isArray(agenticResponse.response)) {
                                 // Handle array of response messages
                                 const assistantMessages = agenticResponse.response.filter(r => r.role === 'assistant');
                                 if (assistantMessages.length > 0 && assistantMessages[0].content && Array.isArray(assistantMessages[0].content)) {
@@ -363,15 +378,15 @@
                             }
                             
                             // Clean up the response text
-                            if (typeof actualResult === 'string' && !actualResult.includes('<pre')) {
+                            if (typeof actualResult === 'string' && !actualResult.includes('<pre') && !actualResult.includes('<div')) {
                                 actualResult = actualResult
                                     .replace(/\\n/g, '<br>')
                                     .replace(/\\"/g, '"')
                                     .replace(/^\"|\"$/g, ''); // Remove surrounding quotes
                             }
                             
-                            // Extract activity information for better insights
-                            if (agenticResponse.activity && Array.isArray(agenticResponse.activity)) {
+                            // Extract activity information for better insights (if not already set)
+                            if (!activityInfo && agenticResponse.activity && Array.isArray(agenticResponse.activity)) {
                                 const planningActivities = agenticResponse.activity.filter(a => a.type && a.type.includes('Planning'));
                                 const searchActivities = agenticResponse.activity.filter(a => a.type && a.type.includes('Search'));
                                 
@@ -502,6 +517,144 @@
                 }
             }
             
+            function formatProductResults(products) {
+                let html = '<div class="product-results-container">';
+                
+                products.forEach((product, index) => {
+                    try {
+                        // Parse the product content string to extract structured data
+                        const content = product.content;
+                        console.log('Processing product content:', content.substring(0, 100) + '...');
+                        
+                        // Extract basic product info using more robust regex
+                        const nameMatch = content.match(/Name:\s*([^;]+)/);
+                        const priceMatch = content.match(/Price:\s*([0-9.]+)/);
+                        const productNumberMatch = content.match(/ProductNumber:\s*([^;]+)/);
+                        const descriptionMatch = content.match(/Description:\s*([^;]+)/);
+                        
+                        const name = nameMatch ? nameMatch[1].trim() : 'Unknown Product';
+                        const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
+                        const productNumber = productNumberMatch ? productNumberMatch[1].trim() : '';
+                        const description = descriptionMatch ? descriptionMatch[1].trim() : '';
+                        
+                        console.log('Extracted:', { name, price, productNumber, description: description.substring(0, 50) + '...' });
+                        
+                        // Extract attributes with improved regex patterns
+                        let colorInfo = '';
+                        let sizeInfo = '';
+                        let materialInfo = '';
+                        let productImages = [];
+                        
+                        // Extract color - look for Color attribute
+                        const colorMatches = content.match(/'Name':\s*'Color'.*?'TextValue':\s*'([^']+)'/g);
+                        if (colorMatches && colorMatches.length > 0) {
+                            const colorMatch = colorMatches[0].match(/'TextValue':\s*'([^']+)'/);
+                            if (colorMatch) colorInfo = colorMatch[1];
+                        }
+                        
+                        // Extract size - look for Size attribute
+                        const sizeMatches = content.match(/'Name':\s*'Size'.*?'TextValue':\s*'([^']+)'/g);
+                        if (sizeMatches && sizeMatches.length > 0) {
+                            const sizeMatch = sizeMatches[0].match(/'TextValue':\s*'([^']+)'/);
+                            if (sizeMatch) sizeInfo = sizeMatch[1].replace(/\|/g, ', ');
+                        }
+                        
+                        // Extract material - look for various material attributes
+                        const materialMatches = content.match(/'Name':\s*'AW\s*(Material|Fabric)'.*?'TextValue':\s*'([^']+)'/g);
+                        if (materialMatches && materialMatches.length > 0) {
+                            const materialMatch = materialMatches[0].match(/'TextValue':\s*'([^']+)'/);
+                            if (materialMatch) materialInfo = materialMatch[1];
+                        }
+                        
+                        // Extract product images with better pattern
+                        const imageMatches = content.match(/'ProductImageUrls':\s*\[[^\]]*'([^']*\.png)'[^\]]*\]/g);
+                        if (imageMatches) {
+                            imageMatches.forEach(match => {
+                                const urlMatch = match.match(/'([^']*\.png)'/);
+                                if (urlMatch && !productImages.includes(urlMatch[1])) {
+                                    productImages.push(urlMatch[1]);
+                                }
+                            });
+                        }
+                        
+                        console.log('Extracted attributes:', { colorInfo, sizeInfo, materialInfo, imageCount: productImages.length });
+                        
+                        // Format price
+                        const formattedPrice = price > 0 ? `$${price.toFixed(2)}` : 'Price unavailable';
+                        
+                        // Create product card with improved layout
+                        html += `
+                            <div class="product-card mb-4">
+                                <div class="row g-0">
+                                    <div class="col-md-3">
+                                        <div class="product-image-container">
+                                            ${productImages.length > 0 ? 
+                                                `<img src="/images/${productImages[0]}" alt="${name}" class="product-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                                <div class="product-placeholder" style="display: none;">
+                                                    <i class="fas fa-image"></i>
+                                                    <span>Image Not Found</span>
+                                                </div>` :
+                                                `<div class="product-placeholder">
+                                                    <i class="fas fa-box"></i>
+                                                    <span>Product</span>
+                                                </div>`
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <div class="product-details">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h5 class="product-title mb-0">${name}</h5>
+                                                <span class="product-price">${formattedPrice}</span>
+                                            </div>
+                                            
+                                            ${productNumber ? `<p class="product-number mb-2"><strong>SKU:</strong> ${productNumber}</p>` : ''}
+                                            
+                                            <p class="product-description">${description}</p>
+                                            
+                                            <div class="product-attributes">
+                                                ${colorInfo ? `<span class="attribute-badge color-badge"><i class="fas fa-palette me-1"></i>${colorInfo}</span>` : ''}
+                                                ${sizeInfo ? `<span class="attribute-badge size-badge"><i class="fas fa-expand-arrows-alt me-1"></i>Sizes: ${sizeInfo}</span>` : ''}
+                                                ${materialInfo ? `<span class="attribute-badge material-badge"><i class="fas fa-layer-group me-1"></i>${materialInfo}</span>` : ''}
+                                            </div>
+                                            
+                                            <div class="mt-3 d-flex justify-content-between align-items-center">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-star me-1"></i>
+                                                    Relevance: ${((products.length - index) / products.length * 100).toFixed(0)}%
+                                                </small>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-tag me-1"></i>
+                                                    Result #${index + 1}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                    } catch (error) {
+                        console.error('Error formatting product:', error, product);
+                        // Enhanced fallback for problematic products
+                        const safeContent = product.content ? product.content.substring(0, 300) : 'No content available';
+                        html += `
+                            <div class="product-card mb-4 border-warning">
+                                <div class="card-body">
+                                    <h6 class="text-warning"><i class="fas fa-exclamation-triangle me-2"></i>Product Data (Raw)</h6>
+                                    <small class="text-muted">Error parsing structured data, showing raw content:</small>
+                                    <pre class="small text-muted mt-2" style="max-height: 150px; overflow-y: auto;">${safeContent}...</pre>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                html += '</div>';
+                console.log('Generated product HTML length:', html.length);
+                return html;
+            }
+            
             function showToast(message, type) {
                 const toastHtml = `
                     <div class="toast-notification toast-${type}">
@@ -599,6 +752,136 @@
         .search-result-content strong {
             color: #1e40af;
             font-weight: 600;
+        }
+
+        .product-results-container {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .product-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .product-card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .product-image-container {
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            position: relative;
+        }
+
+        .product-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .product-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .product-placeholder i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-details {
+            padding: 1.5rem;
+            height: 100%;
+        }
+
+        .product-title {
+            color: #1e293b;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+
+        .product-price {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #059669;
+            white-space: nowrap;
+        }
+
+        .product-number {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .product-description {
+            color: #475569;
+            line-height: 1.5;
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+
+        .product-attributes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .attribute-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .color-badge {
+            background: linear-gradient(135deg, #fef3c7, #fed7aa);
+            color: #92400e;
+        }
+
+        .size-badge {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            color: #1e40af;
+        }
+
+        .material-badge {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            color: #065f46;
+        }
+
+        /* Responsive design for mobile devices */
+        @@media (max-width: 768px) {
+            .product-card .row {
+                flex-direction: column;
+            }
+            
+            .product-image-container {
+                height: 150px;
+            }
+            
+            .product-details {
+                padding: 1rem;
+            }
+            
+            .attribute-badge {
+                font-size: 0.75rem;
+                padding: 0.2rem 0.6rem;
+            }
         }
     </style>
 }
