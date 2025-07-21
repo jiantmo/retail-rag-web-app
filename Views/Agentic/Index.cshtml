@@ -240,6 +240,7 @@
             let resultContent = '';
             let activityContent = '';
             let referencesContent = '';
+            let subQueriesContent = '';
             
             if (response.success && response.result) {
                 try {
@@ -251,6 +252,94 @@
                     }
                     
                     console.log('Parsed agentic data:', agenticData);
+                    
+                    // Build sub-queries breakdown display
+                    if ((agenticData.subQueries && Array.isArray(agenticData.subQueries) && agenticData.subQueries.length > 0) || 
+                        (agenticData.SubQueries && Array.isArray(agenticData.SubQueries) && agenticData.SubQueries.length > 0)) {
+                        
+                        // Use the correct property name (check both cases)
+                        const subQueriesArray = agenticData.subQueries || agenticData.SubQueries;
+                        
+                        subQueriesContent = `
+                            <div class="sub-queries-section mb-4">
+                                <div class="card border-0 rounded-4 shadow-sm">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex align-items-center justify-content-between mb-3">
+                                            <div class="d-flex align-items-center">
+                                                <div class="bg-warning rounded-circle p-2 me-3">
+                                                    <i class="fas fa-sitemap text-white"></i>
+                                                </div>
+                                                <div>
+                                                    <h5 class="mb-0">Query Breakdown</h5>
+                                                    <small class="text-muted">AI decomposed your query into ${subQueriesArray.length} sub-queries</small>
+                                                </div>
+                                            </div>
+                                            <button class="btn btn-sm btn-outline-primary" onclick="toggleQueryBreakdown()" id="toggleBtn">
+                                                <i class="fas fa-chevron-down me-1"></i>
+                                                <span>Show Details</span>
+                                            </button>
+                                        </div>
+                                        
+                                        <div id="queryBreakdownDetails" style="display: none;">
+                                            <div class="row g-3">
+                        `;
+                        
+                        subQueriesArray.forEach((subQuery, index) => {
+                            const executionTime = subQuery.elapsedMs || subQuery.ElapsedMs || 0;
+                            const resultCount = subQuery.resultCount || subQuery.ResultCount || 0;
+                            
+                            subQueriesContent += `
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="sub-query-card p-3 bg-light rounded-3 border">
+                                        <div class="d-flex align-items-start">
+                                            <div class="sub-query-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 28px; height: 28px; font-size: 0.8rem; font-weight: bold;">
+                                                ${index + 1}
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <div class="sub-query-text mb-2">
+                                                    <strong>"${subQuery.query || subQuery.Query || 'Unknown query'}"</strong>
+                                                </div>
+                                                <div class="sub-query-meta">
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-search me-1"></i>
+                                                        ${resultCount} results
+                                                        ${executionTime > 0 ? `<span class="ms-2"><i class="fas fa-clock me-1"></i>${executionTime}ms</span>` : ''}
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        ${subQuery.filter || subQuery.Filter ? `
+                                            <div class="sub-query-filter mt-2 p-2 bg-white rounded-2">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-filter me-1"></i>
+                                                    Filter: ${subQuery.filter || subQuery.Filter}
+                                                </small>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        
+                        subQueriesContent += `
+                                            </div>
+                                            
+                                            <div class="mt-3 p-3 bg-info bg-opacity-10 rounded-3">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fas fa-info-circle text-info me-2"></i>
+                                                    <div>
+                                                        <small class="text-muted">
+                                                            <strong>Parallel Processing:</strong> These queries were executed simultaneously to gather comprehensive information for your request.
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
                     
                     // Extract main response with better error handling
                     let mainResponse = '';
@@ -473,6 +562,8 @@
                         <strong>Query:</strong> "${queryValue}"
                     </div>
                     
+                    ${subQueriesContent}
+                    
                     ${resultContent}
                 </div>
             `;
@@ -536,6 +627,39 @@
                 }, 300);
             }, 3000);
         }
+
+        // Toggle function for query breakdown details
+        window.toggleQueryBreakdown = function() {
+            const details = document.getElementById('queryBreakdownDetails');
+            const toggleBtn = document.getElementById('toggleBtn');
+            const icon = toggleBtn.querySelector('i');
+            const text = toggleBtn.querySelector('span');
+            
+            if (details.style.display === 'none') {
+                details.style.display = 'block';
+                icon.className = 'fas fa-chevron-up me-1';
+                text.textContent = 'Hide Details';
+                
+                // Smooth slide down animation
+                details.style.opacity = '0';
+                details.style.transform = 'translateY(-10px)';
+                details.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                
+                setTimeout(() => {
+                    details.style.opacity = '1';
+                    details.style.transform = 'translateY(0)';
+                }, 10);
+            } else {
+                details.style.opacity = '0';
+                details.style.transform = 'translateY(-10px)';
+                
+                setTimeout(() => {
+                    details.style.display = 'none';
+                    icon.className = 'fas fa-chevron-down me-1';
+                    text.textContent = 'Show Details';
+                }, 300);
+            }
+        };
     });
 </script>
 
@@ -647,5 +771,41 @@
     .search-result-content strong {
         color: #1e40af;
         font-weight: 600;
+    }
+
+    .sub-queries-section {
+        margin-bottom: 2rem;
+    }
+
+    .sub-query-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border: 1px solid #e9ecef !important;
+    }
+
+    .sub-query-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+        border-color: #007bff !important;
+    }
+
+    .sub-query-text {
+        font-size: 0.9rem;
+        line-height: 1.4;
+        color: #2c3e50;
+    }
+
+    .sub-query-meta {
+        font-size: 0.8rem;
+    }
+
+    .sub-query-number {
+        min-width: 28px;
+        min-height: 28px;
+        flex-shrink: 0;
+    }
+
+    .sub-query-filter {
+        border: 1px solid #dee2e6;
+        font-size: 0.75rem;
     }
 </style>

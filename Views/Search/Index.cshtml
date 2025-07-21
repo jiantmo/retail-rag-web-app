@@ -322,6 +322,7 @@
                     let actualResult = '';
                     let activityInfo = '';
                     let referencesInfo = '';
+                    let queryBreakdownHtml = '';
                     
                     // Handle the new formatted response structure from C# backend
                     if (searchType === 'agentic' && response.result) {
@@ -353,6 +354,19 @@
                         // Check if this is already the new formatted structure
                         else if (formattedResult && typeof formattedResult === 'object' && formattedResult.IsProductList !== undefined) {
                             console.log('✅ Detected new formatted structure from C# backend');
+                            console.log('🔍 Checking for SubQueries:', formattedResult.SubQueries);
+                            console.log('🔍 SubQueries type:', typeof formattedResult.SubQueries);
+                            console.log('🔍 SubQueries length:', formattedResult.SubQueries ? formattedResult.SubQueries.length : 'undefined');
+                            console.log('🔍 QueryPlanningTokens:', formattedResult.QueryPlanningTokens);
+                            
+                            // Generate query breakdown HTML if SubQueries are available
+                            if (formattedResult.SubQueries && Array.isArray(formattedResult.SubQueries) && formattedResult.SubQueries.length > 0) {
+                                console.log('🎯 Generating query breakdown with', formattedResult.SubQueries.length, 'sub-queries');
+                                queryBreakdownHtml = generateQueryBreakdownHtml(formattedResult.SubQueries, formattedResult.QueryPlanningTokens);
+                                console.log('✅ Query breakdown HTML generated, length:', queryBreakdownHtml.length);
+                            } else {
+                                console.log('❌ No SubQueries found or SubQueries is empty/invalid');
+                            }
                             
                             if (formattedResult.IsProductList && formattedResult.Products && formattedResult.Products.length > 0) {
                                 console.log('📦 Displaying formatted product list:', formattedResult.Products.length, 'products');
@@ -456,6 +470,7 @@
                         '<small class="text-muted">' + searchTypeLabel + '</small>' +
                         '</div>' +
                         '</div>' +
+                        queryBreakdownHtml +  // Add query breakdown here
                         '<div class="search-result-content">' +
                         (typeof actualResult === 'string' && !actualResult.includes('<br>') && !actualResult.includes('<div') ? actualResult.replace(/\n/g, '<br>') : actualResult) +
                         '</div>' +
@@ -785,7 +800,112 @@
                     }, 300);
                 }, 3000);
             }
+            
+            function generateQueryBreakdownHtml(subQueries, planningTokens) {
+                console.log('🧠 Generating query breakdown HTML with', subQueries.length, 'sub-queries');
+                
+                if (!subQueries || subQueries.length === 0) {
+                    return '';
+                }
+                
+                const uniqueId = 'query-breakdown-' + Date.now();
+                
+                let subQueriesHtml = '';
+                subQueries.forEach((subQuery, index) => {
+                    const timing = subQuery.ElapsedMs ? `${subQuery.ElapsedMs}ms` : 'N/A';
+                    const resultCount = subQuery.ResultCount || 0;
+                    const statusIcon = resultCount > 0 ? 'fa-check-circle text-success' : 'fa-search text-muted';
+                    
+                    subQueriesHtml += `
+                        <div class="sub-query-item mb-2">
+                            <div class="d-flex align-items-start">
+                                <div class="sub-query-number me-3">
+                                    <span class="badge bg-secondary rounded-pill">${index + 1}</span>
+                                </div>
+                                <div class="sub-query-content flex-grow-1">
+                                    <div class="sub-query-text">
+                                        <i class="fas ${statusIcon} me-2"></i>
+                                        <strong>"${subQuery.Query}"</strong>
+                                    </div>
+                                    <div class="sub-query-meta mt-1">
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>Time: ${timing}
+                                            <span class="mx-2">•</span>
+                                            <i class="fas fa-list-ol me-1"></i>Results: ${resultCount}
+                                            ${subQuery.Filter ? `<span class="mx-2">•</span><i class="fas fa-filter me-1"></i>Filtered` : ''}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                const planningInfo = planningTokens ? 
+                    `<div class="text-muted small mt-2">
+                        <i class="fas fa-microchip me-1"></i>
+                        Query Planning Tokens: ${planningTokens}
+                    </div>` : '';
+                
+                return `
+                    <div class="query-breakdown-container mb-4">
+                        <div class="query-breakdown-header" style="cursor: pointer;" onclick="toggleQueryBreakdown('${uniqueId}')">
+                            <div class="d-flex align-items-center justify-content-between p-3 bg-gradient-primary rounded-3 text-white">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-brain me-2"></i>
+                                    <span class="fw-semibold">AI Query Analysis</span>
+                                    <span class="badge bg-white text-primary ms-2">${subQueries.length} sub-queries</span>
+                                </div>
+                                <i id="${uniqueId}-icon" class="fas fa-chevron-down transition-transform"></i>
+                            </div>
+                        </div>
+                        <div id="${uniqueId}" class="query-breakdown-content" style="display: none;">
+                            <div class="p-3 bg-light rounded-bottom">
+                                <div class="alert alert-info border-0 mb-3">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <small>The AI analyzed your query and broke it down into focused sub-queries for better search results:</small>
+                                </div>
+                                ${subQueriesHtml}
+                                ${planningInfo}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
         });
+
+        // Global function for toggle query breakdown - moved outside DOMContentLoaded for onclick access
+        window.toggleQueryBreakdown = function(elementId) {
+            const content = document.getElementById(elementId);
+            const icon = document.getElementById(elementId + '-icon');
+            
+            if (content && icon) {
+                if (content.style.display === 'none') {
+                    content.style.display = 'block';
+                    icon.classList.remove('fa-chevron-down');
+                    icon.classList.add('fa-chevron-up');
+                    
+                    // Smooth animation
+                    content.style.opacity = '0';
+                    content.style.transform = 'translateY(-10px)';
+                    content.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    
+                    setTimeout(() => {
+                        content.style.opacity = '1';
+                        content.style.transform = 'translateY(0)';
+                    }, 10);
+                } else {
+                    content.style.opacity = '0';
+                    content.style.transform = 'translateY(-10px)';
+                    
+                    setTimeout(() => {
+                        content.style.display = 'none';
+                        icon.classList.remove('fa-chevron-up');
+                        icon.classList.add('fa-chevron-down');
+                    }, 300);
+                }
+            }
+        };
     </script>
     
     <style>
@@ -982,6 +1102,69 @@
                 font-size: 0.75rem;
                 padding: 0.2rem 0.6rem;
             }
+        }
+
+        /* Query Breakdown Styles */
+        .query-breakdown-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .query-breakdown-header {
+            transition: all 0.2s ease;
+        }
+
+        .query-breakdown-header:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .query-breakdown-content {
+            border-left: 3px solid #667eea;
+            border-right: 3px solid #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .sub-query-item {
+            border-left: 3px solid transparent;
+            padding-left: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .sub-query-item:hover {
+            border-left-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+            padding-left: 1rem;
+        }
+
+        .sub-query-text {
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .sub-query-meta {
+            font-size: 0.8rem;
+        }
+
+        .sub-query-number .badge {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+        }
+
+        .transition-transform {
+            transition: transform 0.3s ease;
+        }
+
+        /* Animation for expanding content */
+        .query-breakdown-content {
+            transition: opacity 0.3s ease, transform 0.3s ease;
         }
     </style>
 }

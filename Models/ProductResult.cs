@@ -24,5 +24,7 @@ namespace retail_rag_web_app.Models
         public string ActivityInfo { get; set; } = string.Empty;
         public string ReferencesInfo { get; set; } = string.Empty;
         public string RawResponse { get; set; } = string.Empty;
+        public string QueryPlanningTokens { get; set; } = string.Empty;
+        public List<SubQueryResult> SubQueries { get; set; } = new List<SubQueryResult>();
     }
 }

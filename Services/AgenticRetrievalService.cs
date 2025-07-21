@@ -501,47 +501,184 @@ namespace retail_rag_web_app.Services
         {
             try
             {
-                // Extract activity information
+                _logger.LogInformation("🔍 Starting ExtractActivityAndReferences");
+                
+                // Extract activity information following Microsoft's agentic retrieval format
                 if (root.TryGetProperty("activity", out var activity) && activity.ValueKind == JsonValueKind.Array)
                 {
                     var planningActivities = 0;
                     var searchActivities = 0;
+                    var semanticRankerActivities = 0;
                     var totalActivities = activity.GetArrayLength();
+                    var subQueries = new List<SubQueryResult>();
+                    int planningInputTokens = 0;
+                    int planningOutputTokens = 0;
+                    
+                    _logger.LogInformation("📊 Processing {Count} activity items", totalActivities);
                     
                     foreach (var activityItem in activity.EnumerateArray())
                     {
+                        _logger.LogDebug("🔎 Processing activity item: {Activity}", activityItem.GetRawText());
+                        
                         if (activityItem.TryGetProperty("type", out var type))
                         {
                             var typeStr = type.GetString() ?? "";
-                            if (typeStr.Contains("Planning")) planningActivities++;
-                            if (typeStr.Contains("Search")) searchActivities++;
+                            _logger.LogDebug("📋 Activity type: {Type}", typeStr);
+                            
+                            // Handle ModelQueryPlanning activities (based on Microsoft docs)
+                            if (typeStr.Equals("ModelQueryPlanning", StringComparison.OrdinalIgnoreCase) || 
+                                typeStr.Contains("Planning"))
+                            {
+                                planningActivities++;
+                                _logger.LogDebug("🧠 Found planning activity");
+                                
+                                // Extract planning token usage
+                                if (activityItem.TryGetProperty("inputTokens", out var inputTokens))
+                                {
+                                    planningInputTokens = inputTokens.GetInt32();
+                                }
+                                if (activityItem.TryGetProperty("outputTokens", out var outputTokens))
+                                {
+                                    planningOutputTokens = outputTokens.GetInt32();
+                                }
+                                
+                                response.QueryPlanningTokens = $"Input: {planningInputTokens}, Output: {planningOutputTokens}";
+                                _logger.LogDebug("💭 Planning tokens: {Tokens}", response.QueryPlanningTokens);
+                            }
+                            // Handle AzureSearchQuery activities (sub-queries from Microsoft docs)
+                            else if (typeStr.Equals("AzureSearchQuery", StringComparison.OrdinalIgnoreCase) || 
+                                     typeStr.Contains("Search"))
+                            {
+                                searchActivities++;
+                                _logger.LogDebug("🔍 Found search activity");
+                                
+                                // Extract sub-query details following Microsoft's format
+                                var subQuery = new SubQueryResult();
+                                
+                                // Get target index
+                                if (activityItem.TryGetProperty("targetIndex", out var targetIndex))
+                                {
+                                    _logger.LogDebug("🎯 Target index: {Index}", targetIndex.GetString());
+                                }
+                                
+                                // Extract query object
+                                if (activityItem.TryGetProperty("query", out var queryObj))
+                                {
+                                    if (queryObj.TryGetProperty("search", out var searchText))
+                                    {
+                                        subQuery.Query = searchText.GetString() ?? "";
+                                        _logger.LogDebug("🔎 Sub-query: {Query}", subQuery.Query);
+                                    }
+                                    
+                                    if (queryObj.TryGetProperty("filter", out var filterText) && 
+                                        filterText.ValueKind != JsonValueKind.Null)
+                                    {
+                                        subQuery.Filter = filterText.GetString();
+                                        _logger.LogDebug("🔧 Filter: {Filter}", subQuery.Filter);
+                                    }
+                                }
+                                
+                                // Extract timing and results
+                                if (activityItem.TryGetProperty("count", out var count))
+                                {
+                                    subQuery.ResultCount = count.GetInt32();
+                                    _logger.LogDebug("📊 Result count: {Count}", subQuery.ResultCount);
+                                }
+                                
+                                if (activityItem.TryGetProperty("elapsedMs", out var elapsed))
+                                {
+                                    subQuery.ElapsedMs = elapsed.GetInt32();
+                                    _logger.LogDebug("⏱️ Elapsed ms: {ElapsedMs}", subQuery.ElapsedMs);
+                                }
+                                
+                                if (activityItem.TryGetProperty("queryTime", out var queryTime) && 
+                                    DateTime.TryParse(queryTime.GetString(), out var parsedTime))
+                                {
+                                    subQuery.QueryTime = parsedTime;
+                                    _logger.LogDebug("🕒 Query time: {QueryTime}", subQuery.QueryTime);
+                                }
+                                
+                                // Add sub-query if it has meaningful content
+                                if (!string.IsNullOrEmpty(subQuery.Query))
+                                {
+                                    subQueries.Add(subQuery);
+                                    _logger.LogDebug("✅ Added sub-query: {Query}", subQuery.Query);
+                                }
+                            }
+                            // Handle SemanticRanker activities
+                            else if (typeStr.Equals("AzureSearchSemanticRanker", StringComparison.OrdinalIgnoreCase) || 
+                                     typeStr.Contains("SemanticRanker"))
+                            {
+                                semanticRankerActivities++;
+                                _logger.LogDebug("🧮 Found semantic ranker activity");
+                                
+                                if (activityItem.TryGetProperty("inputTokens", out var semanticTokens))
+                                {
+                                    _logger.LogDebug("🎯 Semantic ranker tokens: {Tokens}", semanticTokens.GetInt32());
+                                }
+                            }
                         }
                     }
                     
-                    response.ActivityInfo = $"AI planning operations: {planningActivities}, Search operations: {searchActivities}, Total steps: {totalActivities}";
+                    // Assign SubQueries to response object (this was missing!)
+                    response.SubQueries = subQueries;
+                    
+                    // Create detailed activity summary
+                    var activityParts = new List<string>();
+                    if (planningActivities > 0) activityParts.Add($"AI planning: {planningActivities}");
+                    if (searchActivities > 0) activityParts.Add($"Search operations: {searchActivities}");
+                    if (semanticRankerActivities > 0) activityParts.Add($"Semantic ranking: {semanticRankerActivities}");
+                    
+                    response.ActivityInfo = $"{string.Join(", ", activityParts)}, Total steps: {totalActivities}";
+                    
+                    _logger.LogInformation("✅ SubQueries extraction completed: {Count} sub-queries found", subQueries.Count);
+                    foreach (var sq in subQueries)
+                    {
+                        _logger.LogInformation("📝 Sub-query: '{Query}' -> {ResultCount} results in {ElapsedMs}ms", 
+                            sq.Query, sq.ResultCount, sq.ElapsedMs);
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("⚠️ No activity array found in response");
                 }
                 
-                // Extract references information
+                // Extract references information following Microsoft's format
                 if (root.TryGetProperty("references", out var references) && references.ValueKind == JsonValueKind.Array)
                 {
                     var docRefs = 0;
                     var totalRefs = references.GetArrayLength();
+                    
+                    _logger.LogInformation("📚 Processing {Count} reference items", totalRefs);
                     
                     foreach (var reference in references.EnumerateArray())
                     {
                         if (reference.TryGetProperty("type", out var type))
                         {
                             var typeStr = type.GetString() ?? "";
-                            if (typeStr.Contains("Document")) docRefs++;
+                            if (typeStr.Equals("AzureSearchDoc", StringComparison.OrdinalIgnoreCase) || 
+                                typeStr.Contains("Document")) 
+                            {
+                                docRefs++;
+                            }
                         }
                     }
                     
                     response.ReferencesInfo = $"Referenced {docRefs} document(s) from knowledge base, Total sources: {totalRefs}";
+                    _logger.LogInformation("📖 References summary: {Info}", response.ReferencesInfo);
                 }
+                else
+                {
+                    _logger.LogWarning("⚠️ No references array found in response");
+                }
+                
+                _logger.LogInformation("🎯 ExtractActivityAndReferences completed successfully");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error extracting activity and references");
+                _logger.LogError(ex, "❌ Error extracting activity and references");
+                // Ensure we don't leave SubQueries null
+                response.SubQueries ??= new List<SubQueryResult>();
             }
         }
 
