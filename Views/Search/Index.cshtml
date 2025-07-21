@@ -326,37 +326,118 @@
                     // Handle the new formatted response structure from C# backend
                     if (searchType === 'agentic' && response.result) {
                         console.log('🎯 Processing formatted agentic response from C# backend');
-                        console.log('Response structure:', response.result);
+                        console.log('Full response object:', JSON.stringify(response, null, 2));
+                        console.log('Response.result type:', typeof response.result);
+                        console.log('Response.result content preview:', response.result.toString().substring(0, 500));
                         
                         const formattedResult = response.result;
                         
-                        if (formattedResult.IsProductList && formattedResult.Products && formattedResult.Products.length > 0) {
-                            console.log('📦 Displaying formatted product list:', formattedResult.Products.length, 'products');
-                            actualResult = formatBackendProducts(formattedResult.Products);
+                        // FORCE CHECK: If result looks like JSON array, parse it regardless of type
+                        const resultString = formattedResult.toString().trim();
+                        if (resultString.startsWith('[') && resultString.includes('"ref_id"')) {
+                            console.log('🔥 FORCE PARSING: Detected JSON array format, forcing parse...');
+                            try {
+                                const jsonData = JSON.parse(resultString);
+                                if (Array.isArray(jsonData) && jsonData.length > 0) {
+                                    console.log('✅ FORCE PARSED successfully! Array with', jsonData.length, 'items');
+                                    actualResult = formatProductResults(jsonData);
+                                } else {
+                                    console.log('❌ Force parse failed - not an array or empty');
+                                    actualResult = 'Failed to parse product data';
+                                }
+                            } catch (e) {
+                                console.error('❌ Force parse JSON failed:', e);
+                                actualResult = '<div class="alert alert-danger">Failed to parse product data: ' + e.message + '</div>';
+                            }
+                        }
+                        // Check if this is already the new formatted structure
+                        else if (formattedResult && typeof formattedResult === 'object' && formattedResult.IsProductList !== undefined) {
+                            console.log('✅ Detected new formatted structure from C# backend');
                             
-                            activityInfo = formattedResult.ActivityInfo ? 
-                                '<div class="mt-3 p-3 bg-light rounded-3">' +
-                                '<h6><i class="fas fa-chart-line me-2"></i>Search Results</h6>' +
-                                '<small class="text-muted">' + formattedResult.ActivityInfo + '</small>' +
-                                '</div>' : '';
+                            if (formattedResult.IsProductList && formattedResult.Products && formattedResult.Products.length > 0) {
+                                console.log('📦 Displaying formatted product list:', formattedResult.Products.length, 'products');
+                                console.log('First product sample:', formattedResult.Products[0]);
+                                actualResult = formatBackendProducts(formattedResult.Products);
                                 
-                            referencesInfo = formattedResult.ReferencesInfo ? 
-                                '<div class="mt-3 p-3 bg-info bg-opacity-10 rounded-3">' +
-                                '<h6><i class="fas fa-link me-2"></i>Knowledge Sources</h6>' +
-                                '<small class="text-muted">' + formattedResult.ReferencesInfo + '</small>' +
-                                '</div>' : '';
-                        } else if (formattedResult.FormattedText) {
-                            console.log('📝 Displaying formatted text response');
-                            actualResult = formattedResult.FormattedText;
+                                activityInfo = formattedResult.ActivityInfo ? 
+                                    '<div class="mt-3 p-3 bg-light rounded-3">' +
+                                    '<h6><i class="fas fa-chart-line me-2"></i>Search Results</h6>' +
+                                    '<small class="text-muted">' + formattedResult.ActivityInfo + '</small>' +
+                                    '</div>' : '';
+                                    
+                                referencesInfo = formattedResult.ReferencesInfo ? 
+                                    '<div class="mt-3 p-3 bg-info bg-opacity-10 rounded-3">' +
+                                    '<h6><i class="fas fa-link me-2"></i>Knowledge Sources</h6>' +
+                                    '<small class="text-muted">' + formattedResult.ReferencesInfo + '</small>' +
+                                    '</div>' : '';
+                            } else if (formattedResult.FormattedText) {
+                                console.log('📝 Checking FormattedText for JSON array...');
+                                const formattedTextStr = formattedResult.FormattedText.toString().trim();
+                                
+                                // Check if FormattedText contains a JSON array with product data
+                                if (formattedTextStr.startsWith('[') && formattedTextStr.includes('"ref_id"')) {
+                                    console.log('🔥 FORMATTED TEXT CONTAINS JSON ARRAY - Force parsing...');
+                                    try {
+                                        const jsonData = JSON.parse(formattedTextStr);
+                                        if (Array.isArray(jsonData) && jsonData.length > 0) {
+                                            console.log('✅ Successfully parsed FormattedText JSON! Products:', jsonData.length);
+                                            actualResult = formatProductResults(jsonData);
+                                        } else {
+                                            console.log('❌ Parsed but not a valid product array');
+                                            actualResult = formattedResult.FormattedText;
+                                        }
+                                    } catch (e) {
+                                        console.error('❌ Failed to parse FormattedText JSON:', e);
+                                        actualResult = formattedResult.FormattedText;
+                                    }
+                                } else {
+                                    console.log('📝 FormattedText is not JSON, displaying as text');
+                                    actualResult = formattedResult.FormattedText;
+                                }
+                                
+                                activityInfo = formattedResult.ActivityInfo ? 
+                                    '<div class="mt-3 p-3 bg-light rounded-3">' +
+                                    '<h6><i class="fas fa-chart-line me-2"></i>Query Processing</h6>' +
+                                    '<small class="text-muted">' + formattedResult.ActivityInfo + '</small>' +
+                                    '</div>' : '';
+                            } else {
+                                console.log('⚠️ New structure detected but no formatted content found');
+                                actualResult = formattedResult.RawResponse || 'No response content available';
+                            }
+                        } else if (typeof formattedResult === 'string') {
+                            console.log('⚠️ Response.result is a string (old format or raw JSON)');
+                            console.log('String content preview:', formattedResult.substring(0, 200));
                             
-                            activityInfo = formattedResult.ActivityInfo ? 
-                                '<div class="mt-3 p-3 bg-light rounded-3">' +
-                                '<h6><i class="fas fa-chart-line me-2"></i>Query Processing</h6>' +
-                                '<small class="text-muted">' + formattedResult.ActivityInfo + '</small>' +
-                                '</div>' : '';
+                            // Try to parse as JSON in case it's raw response
+                            try {
+                                const jsonData = JSON.parse(formattedResult);
+                                if (Array.isArray(jsonData)) {
+                                    console.log('🔧 Parsing raw JSON array with', jsonData.length, 'items');
+                                    console.log('First item sample:', jsonData[0]);
+                                    actualResult = formatProductResults(jsonData);
+                                } else {
+                                    console.log('📝 Using string content as-is');
+                                    actualResult = formattedResult;
+                                }
+                            } catch (e) {
+                                console.log('📝 String is not JSON, using as-is');
+                                // Check if it looks like JSON but failed to parse
+                                if (formattedResult.trim().startsWith('[') && formattedResult.trim().endsWith(']')) {
+                                    console.log('🚨 Looks like malformed JSON, attempting to display as raw product data');
+                                    actualResult = '<div class="alert alert-warning"><strong>Raw Product Data:</strong><br><pre>' + formattedResult.substring(0, 1000) + '...</pre></div>';
+                                } else {
+                                    actualResult = formattedResult;
+                                }
+                            }
+                        } else if (Array.isArray(formattedResult)) {
+                            console.log('🔧 Response.result is a direct array (fallback path)');
+                            console.log('Array contains', formattedResult.length, 'items');
+                            // This is the raw JSON array being returned directly
+                            actualResult = formatProductResults(formattedResult);
                         } else {
-                            console.log('⚠️ Using fallback display for unrecognized response structure');
-                            actualResult = formattedResult.RawResponse || 'No response content available';
+                            console.log('⚠️ Unexpected response.result format:', typeof formattedResult);
+                            console.log('FormattedResult value:', formattedResult);
+                            actualResult = 'Unexpected response format received';
                         }
                     } else {
                         // Handle RAG search response (existing logic)
