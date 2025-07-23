@@ -57,7 +57,7 @@ namespace retail_rag_web_app.Services
 
             _openAIDeployment = Environment.GetEnvironmentVariable("AZURE_OPENAI_GPT_DEPLOYMENT") 
                 ?? configuration["AZURE_OPENAI_GPT_DEPLOYMENT"] 
-                ?? "gpt-4o-mini";
+                ?? "gpt-4.1";
 
             _openAIApiKey = Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY") 
                 ?? configuration["AZURE_OPENAI_API_KEY"];
@@ -406,7 +406,7 @@ I focus on delivering clear, structured product information that helps customers
                             ResourceUri = _openAIEndpoint,
                             ApiKey = _useRoleBasedAuth ? null : _openAIApiKey,
                             DeploymentId = _openAIDeployment,
-                            ModelName = !string.IsNullOrEmpty(options.ModelName) ? options.ModelName : _openAIDeployment
+                            ModelName = !string.IsNullOrEmpty(options.ModelName) ? options.ModelName : "gpt-4.1"
                         }
                     }
                 },
@@ -502,7 +502,7 @@ I focus on delivering clear, structured product information that helps customers
         public double DefaultRerankerThreshold { get; set; } = 2.5;
         public bool DefaultIncludeReferenceSourceData { get; set; } = true;
         public int DefaultMaxDocsForReranker { get; set; } = 200;
-        public string? ModelName { get; set; } = "gpt-4o-mini";
+        public string? ModelName { get; set; } = "gpt-4.1";
         public int MaxOutputSize { get; set; } = 5000;
         public int MaxRuntimeInSeconds { get; set; } = 60;
         public object? EncryptionKey { get; set; }

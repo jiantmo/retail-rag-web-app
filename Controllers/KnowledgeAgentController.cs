@@ -69,7 +69,7 @@ namespace retail_rag_web_app.Controllers
                     DefaultRerankerThreshold = request.RerankerThreshold ?? 2.5,
                     DefaultIncludeReferenceSourceData = request.IncludeReferenceSourceData ?? true,
                     DefaultMaxDocsForReranker = request.MaxDocsForReranker ?? 200,
-                    ModelName = !string.IsNullOrEmpty(request.ModelName) ? request.ModelName : "gpt-4o-mini",
+                    ModelName = !string.IsNullOrEmpty(request.ModelName) ? request.ModelName : "gpt-4.1",
                     MaxOutputSize = request.MaxOutputSize ?? 5000,
                     MaxRuntimeInSeconds = request.MaxRuntimeInSeconds ?? 60
                 };
@@ -150,7 +150,7 @@ namespace retail_rag_web_app.Controllers
                     DefaultRerankerThreshold = 2.0,  // Lower threshold for retail queries
                     DefaultIncludeReferenceSourceData = true,
                     DefaultMaxDocsForReranker = 200,  // Increased for better retrieval coverage
-                    ModelName = "gpt-4o-mini",  // Explicitly set model name
+                    ModelName = "gpt-4.1",  // Explicitly set model name
                     MaxOutputSize = 5000,
                     MaxRuntimeInSeconds = 30  // Faster response for retail
                 };

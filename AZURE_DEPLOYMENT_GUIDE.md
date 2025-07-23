@@ -61,7 +61,7 @@ az account set --subscription "你的订阅ID"
 |---------|------|--------|
 | `AZURE_OPENAI_ENDPOINT` | Azure OpenAI服务端点 | `https://your-openai.openai.azure.com/` |
 | `AZURE_OPENAI_API_KEY` | Azure OpenAI API密钥 | `your-api-key` |
-| `AZURE_OPENAI_DEPLOYMENT_NAME` | GPT模型部署名称 | `gpt-4o-mini` |
+| `AZURE_OPENAI_DEPLOYMENT_NAME` | GPT模型部署名称 | `gpt-4.1` |
 | `AZURE_SEARCH_SERVICE_NAME` | Azure搜索服务名称 | `your-search-service` |
 | `AZURE_SEARCH_API_KEY` | Azure搜索API密钥 | `your-search-key` |
 | `AZURE_SEARCH_INDEX_NAME` | 搜索索引名称 | `retail-products` |

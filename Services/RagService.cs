@@ -35,26 +35,18 @@ Sources: {1}";
                 ?? throw new ArgumentException("AZURE_OPENAI_ENDPOINT not configured");
             var gptDeployment = configuration["AZURE_OPENAI_GPT_DEPLOYMENT"]
                 ?? throw new ArgumentException("AZURE_OPENAI_GPT_DEPLOYMENT not configured");
-            var managedIdentityClientId = Environment.GetEnvironmentVariable("AZURE_CLIENT_ID") 
-                ?? configuration["AzureManagedIdentity:ClientId"];
             _indexName = configuration["AZURE_SEARCH_INDEX_NAME"]
                 ?? throw new ArgumentException("AZURE_SEARCH_INDEX_NAME not configured");
 
             _logger.LogInformation("Initializing RagService with Search: {SearchEndpoint}, OpenAI: {OpenAIEndpoint}, Index: {IndexName}", 
                 searchEndpoint, openAIEndpoint, _indexName);
 
-            // 使用Managed Identity或DefaultAzureCredential认证
-            TokenCredential credential;
-            if (!string.IsNullOrEmpty(managedIdentityClientId))
+            // 使用System-assigned Managed Identity认证
+            TokenCredential credential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
             {
-                _logger.LogInformation("Using ManagedIdentityCredential with ClientId: {ClientId}", managedIdentityClientId);
-                credential = new ManagedIdentityCredential(managedIdentityClientId);
-            }
-            else
-            {
-                _logger.LogInformation("Using DefaultAzureCredential");
-                credential = new DefaultAzureCredential();
-            }
+                ManagedIdentityClientId = null // Use system-assigned managed identity
+            });
+            _logger.LogInformation("Using DefaultAzureCredential with system-assigned managed identity");
             
             _searchClient = new SearchClient(new Uri(searchEndpoint), _indexName, credential);
             _openAIClient = new AzureOpenAIClient(new Uri(openAIEndpoint), credential);

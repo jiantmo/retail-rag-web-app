@@ -63,7 +63,7 @@ retail-rag-web-app/
    - 创建搜索索引
 
 2. **部署 Azure OpenAI 模型**
-   - `gpt-4o` 或 `gpt-4o-mini` (用于查询规划和答案生成)
+   - `gpt-4o` 或 `gpt-4.1` (用于查询规划和答案生成)
    - `text-embedding-3-large` (用于向量搜索)
 
 3. **配置角色权限**

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Knowledge Agent Management</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .status-success { color: #28a745; }
+        .status-error { color: #dc3545; }
+        .status-warning { color: #ffc107; }
+        .loading { 
+            display: none; 
+            text-align: center; 
+            margin: 20px 0; 
+        }
+        .log-container {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+        }
+        .card-header {
+            background-color: #e7f3ff;
+            border-bottom: 1px solid #b8daff;
+        }
+        .btn-primary {
+            background-color: #0066cc;
+            border-color: #0066cc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="mb-4">🤖 Retail Knowledge Agent Management</h1>
+                
+                <!-- Status Card -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">📊 Agent Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="agentStatus" class="mb-3">
+                            <span class="text-muted">Loading status...</span>
+                        </div>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="checkStatus()">
+                            🔄 Refresh Status
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Management Actions -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">🛠️ Management Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Create Knowledge Agent</h6>
+                                <p class="text-muted small">Create the retail-knowledge-agent with optimized settings</p>
+                                <button class="btn btn-primary" onclick="createAgent()">
+                                    ➕ Create Agent
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>List All Agents</h6>
+                                <p class="text-muted small">View all existing knowledge agents</p>
+                                <button class="btn btn-info" onclick="listAgents()">
+                                    📋 List Agents
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Test Agent -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">🧪 Test Knowledge Agent</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <label for="testQuery" class="form-label">Test Query:</label>
+                                <textarea id="testQuery" class="form-control mb-3" rows="3" 
+                                          placeholder="Enter your test query here, e.g., 'Show me laptops under $1000'">Show me laptops under $1000</textarea>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Action:</label><br>
+                                <button class="btn btn-success w-100" onclick="testAgent()">
+                                    🚀 Test Agent
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading Indicator -->
+                <div id="loading" class="loading">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Processing request...</p>
+                </div>
+
+                <!-- Results -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">📄 Results & Logs</h5>
+                        <button class="btn btn-outline-secondary btn-sm float-end" onclick="clearResults()">
+                            🗑️ Clear
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="results" class="log-container">
+                            <em class="text-muted">Results will appear here...</em>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_BASE = '/KnowledgeAgent';
+        
+        // Utility functions
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+        
+        function logMessage(message, type = 'info') {
+            const results = document.getElementById('results');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'status-error' : 
+                            type === 'success' ? 'status-success' : 
+                            type === 'warning' ? 'status-warning' : '';
+            
+            results.innerHTML += `<div class="${className}"><strong>[${timestamp}]</strong> ${message}</div>`;
+            results.scrollTop = results.scrollHeight;
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '<em class="text-muted">Results cleared...</em>';
+        }
+        
+        // API calls
+        async function checkStatus() {
+            try {
+                showLoading();
+                logMessage('🔍 Checking agent status...', 'info');
+                
+                const response = await fetch(`${API_BASE}/get/retail-knowledge-agent`);
+                const data = await response.json();
+                
+                const statusElement = document.getElementById('agentStatus');
+                
+                if (data.success && data.agent) {
+                    statusElement.innerHTML = `
+                        <span class="status-success">✅ Agent exists and ready</span><br>
+                        <small class="text-muted">
+                            Name: ${data.agent.name}<br>
+                            Target Indexes: ${data.agent.targetIndexes.length}<br>
+                            Models: ${data.agent.models.length}
+                        </small>
+                    `;
+                    logMessage('✅ Knowledge agent is ready', 'success');
+                } else {
+                    statusElement.innerHTML = '<span class="status-error">❌ Agent not found</span>';
+                    logMessage('❌ Knowledge agent not found', 'error');
+                }
+            } catch (error) {
+                logMessage(`❌ Error checking status: ${error.message}`, 'error');
+                document.getElementById('agentStatus').innerHTML = '<span class="status-error">❌ Error checking status</span>';
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        async function createAgent() {
+            try {
+                showLoading();
+                logMessage('🛠️ Creating retail knowledge agent...', 'info');
+                
+                const response = await fetch(`${API_BASE}/setup`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        agentName: 'retail-knowledge-agent'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    logMessage('✅ Knowledge agent created successfully!', 'success');
+                    logMessage(`📝 Agent details: ${JSON.stringify(data.agent, null, 2)}`, 'info');
+                    await checkStatus(); // Refresh status
+                } else {
+                    logMessage(`❌ Failed to create agent: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                logMessage(`❌ Error creating agent: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        async function listAgents() {
+            try {
+                showLoading();
+                logMessage('📋 Listing all knowledge agents...', 'info');
+                
+                const response = await fetch(`${API_BASE}/list`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    logMessage(`📋 Found ${data.agents.length} agents:`, 'success');
+                    data.agents.forEach((agent, index) => {
+                        logMessage(`${index + 1}. ${agent.name} (${agent.targetIndexes.length} indexes, ${agent.models.length} models)`, 'info');
+                    });
+                } else {
+                    logMessage(`❌ Failed to list agents: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                logMessage(`❌ Error listing agents: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        async function testAgent() {
+            const query = document.getElementById('testQuery').value.trim();
+            if (!query) {
+                logMessage('⚠️ Please enter a test query', 'warning');
+                return;
+            }
+            
+            try {
+                showLoading();
+                logMessage(`🧪 Testing agent with query: "${query}"`, 'info');
+                
+                const response = await fetch(`${API_BASE}/test`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        agentName: 'retail-knowledge-agent'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    logMessage('✅ Test completed successfully!', 'success');
+                    
+                    if (data.results && data.results.response) {
+                        logMessage('📝 Response:', 'info');
+                        if (Array.isArray(data.results.response)) {
+                            data.results.response.forEach(msg => {
+                                if (msg.content && Array.isArray(msg.content)) {
+                                    msg.content.forEach(content => {
+                                        if (content.text) {
+                                            logMessage(`${content.text}`, 'info');
+                                        }
+                                    });
+                                }
+                            });
+                        } else {
+                            logMessage(`${data.results.response}`, 'info');
+                        }
+                    }
+                    
+                    if (data.results && data.results.activity) {
+                        logMessage(`🔍 Found ${data.results.activity.length} activities`, 'info');
+                    }
+                    
+                    if (data.results && data.results.references) {
+                        logMessage(`📚 Found ${data.results.references.length} references`, 'info');
+                    }
+                } else {
+                    logMessage(`❌ Test failed: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                logMessage(`❌ Error testing agent: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            logMessage('🚀 Knowledge Agent Management Interface Loaded', 'success');
+            checkStatus();
+        });
+    </script>
+</body>
+</html>

@@ -48,21 +48,14 @@ namespace retail_rag_web_app.Services
 
             _openAIDeployment = Environment.GetEnvironmentVariable("AZURE_OPENAI_GPT_DEPLOYMENT") 
                 ?? configuration["AZURE_OPENAI_GPT_DEPLOYMENT"] 
-                ?? "gpt-4o-mini";
+                ?? "gpt-4.1";
 
-            // Use Managed Identity or DefaultAzureCredential for authentication
-            var managedIdentityClientId = Environment.GetEnvironmentVariable("AZURE_CLIENT_ID") 
-                ?? configuration["AzureManagedIdentity:ClientId"];
-            if (!string.IsNullOrEmpty(managedIdentityClientId))
+            // Use System-assigned Managed Identity for authentication
+            _credential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
             {
-                _credential = new ManagedIdentityCredential(managedIdentityClientId);
-                _logger.LogInformation("Using ManagedIdentityCredential with ClientId: {ClientId}", managedIdentityClientId);
-            }
-            else
-            {
-                _credential = new DefaultAzureCredential();
-                _logger.LogInformation("Using DefaultAzureCredential");
-            }
+                ManagedIdentityClientId = null // Use system-assigned managed identity
+            });
+            _logger.LogInformation("Using DefaultAzureCredential with system-assigned managed identity");
 
             _logger.LogInformation("AgenticRetrievalService initialized with endpoint: {Endpoint}, agent: {Agent}, index: {Index}", 
                 _searchEndpoint, _agentName, _indexName);
@@ -97,7 +90,7 @@ namespace retail_rag_web_app.Services
                             {
                                 resourceUri = _openAIEndpoint,
                                 deploymentId = _openAIDeployment,
-                                modelName = "gpt-4o-mini"
+                                modelName = "gpt-4.1"
                             }
                         }
                     }
