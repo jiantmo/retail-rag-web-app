@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 
 namespace retail_rag_web_app.Controllers
 {
-    [Route("search")]
     public class SearchController : Controller
     {
         private readonly RagService _ragService;

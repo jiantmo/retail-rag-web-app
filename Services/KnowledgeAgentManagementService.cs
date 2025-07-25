@@ -221,7 +221,8 @@ namespace retail_rag_web_app.Services
             try
             {
                 var targetAgentName = agentName ?? _agentName;
-                var url = $"{_searchEndpoint}/agents/{targetAgentName}?api-version=2025-05-01-preview";
+                // 使用正确的 skillsets API 端点，根据 Microsoft 文档
+                var url = $"{_searchEndpoint}/skillsets('{targetAgentName}')?api-version=2023-07-01-preview";
                 
                 var request = new HttpRequestMessage(HttpMethod.Delete, url);
                 await AddAuthenticationHeaderAsync(request);

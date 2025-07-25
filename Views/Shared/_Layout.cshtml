@@ -388,7 +388,7 @@
     <header>
         <nav class="navbar navbar-expand-lg">
             <div class="container">
-                <a class="navbar-brand" asp-controller="Home" asp-action="Index">
+                <a class="navbar-brand" asp-controller="Search" asp-action="Index">
                     <i class="fas fa-robot"></i>
                     Retail AI Assistant
                 </a>
@@ -397,14 +397,21 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav ms-auto">
+                        @* Hidden Home navigation
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Home" asp-action="Index">
                                 <i class="fas fa-home me-1"></i>Home
                             </a>
                         </li>
+                        *@
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Search" asp-action="Index">
-                                <i class="fas fa-search me-1"></i>Search
+                                <i class="fas fa-search me-1"></i>Text Search
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Search" asp-action="ImageSearch">
+                                <i class="fas fa-image me-1"></i>Image Search
                             </a>
                         </li>
                         @* Hidden Agentic Search navigation - can be enabled when needed
