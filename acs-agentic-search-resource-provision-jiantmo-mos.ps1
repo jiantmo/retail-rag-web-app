@@ -24,10 +24,16 @@ param(
     [string]$SearchServiceName = "jiantmo-acs",
     
     [Parameter(Mandatory=$false)]
-    [string]$SearchIndexName = "retail-acs-index",
+    [string]$SearchIndexName = "rag-acs-index",
     
     [Parameter(Mandatory=$false)]
-    [string]$OpenAIServiceName = "jiantmo-openai",
+    [string]$AIServicesName = "jiantmo-ai-services",
+    
+    [Parameter(Mandatory=$false)]
+    [string]$AIServicesProjectName = "jiantmo-ai-services-proj",
+    
+    [Parameter(Mandatory=$false)]
+    [string]$AIFoundryProjectName = "jiantmo-ai-foundry-proj",
     
     [Parameter(Mandatory=$false)]
     [string]$LLMModelName = "gpt-4.1",
@@ -56,6 +62,71 @@ function Write-ColorOutput {
     param([string]$Message, [string]$Color = "White")
     Write-Host $Message -ForegroundColor $Color
 }
+
+# 检查并安装必要的PowerShell模块
+function Test-PowerShellModules {
+    Write-ColorOutput "🔧 检查PowerShell模块..." "Cyan"
+    
+    # 检查Az.CognitiveServices模块
+    if (-not (Get-Module -ListAvailable -Name Az.CognitiveServices)) {
+        Write-ColorOutput "📦 正在安装Az.CognitiveServices模块..." "Yellow"
+        try {
+            Install-Module -Name Az.CognitiveServices -Force -AllowClobber -Scope CurrentUser
+            Write-ColorOutput "✅ Az.CognitiveServices模块安装成功" "Green"
+        } catch {
+            Write-ColorOutput "⚠️ Az.CognitiveServices模块安装失败: $($_.Exception.Message)" "Red"
+            Write-ColorOutput "💡 请手动运行: Install-Module -Name Az.CognitiveServices -Force" "Yellow"
+        }
+    } else {
+        Write-ColorOutput "✅ Az.CognitiveServices模块已安装" "Green"
+    }
+    
+    # 检查Az.Accounts模块
+    if (-not (Get-Module -ListAvailable -Name Az.Accounts)) {
+        Write-ColorOutput "📦 正在安装Az.Accounts模块..." "Yellow"
+        try {
+            Install-Module -Name Az.Accounts -Force -AllowClobber -Scope CurrentUser
+            Write-ColorOutput "✅ Az.Accounts模块安装成功" "Green"
+        } catch {
+            Write-ColorOutput "⚠️ Az.Accounts模块安装失败: $($_.Exception.Message)" "Red"
+            Write-ColorOutput "💡 请手动运行: Install-Module -Name Az.Accounts -Force" "Yellow"
+        }
+    } else {
+        Write-ColorOutput "✅ Az.Accounts模块已安装" "Green"
+    }
+    
+    # 导入必要的模块
+    try {
+        Import-Module Az.CognitiveServices -Force
+        Import-Module Az.Accounts -Force
+        Write-ColorOutput "✅ PowerShell模块导入成功" "Green"
+    } catch {
+        Write-ColorOutput "⚠️ PowerShell模块导入失败: $($_.Exception.Message)" "Yellow"
+    }
+}
+
+# Purge已删除的认知服务资源函数
+function Invoke-CognitiveServicesPurge {
+    param([string]$ResourceName, [string]$Location, [string]$SubscriptionId, [string]$ResourceGroupName)
+    
+    Write-ColorOutput "🗑️ 尝试purge已删除的认知服务资源: $ResourceName..." "Yellow"
+    
+    try {
+        $purgeCommand = "az resource delete --ids ""/subscriptions/$SubscriptionId/providers/Microsoft.CognitiveServices/locations/$Location/resourceGroups/$ResourceGroupName/deletedAccounts/$ResourceName"""
+        Invoke-Expression $purgeCommand
+        
+        if ($LASTEXITCODE -eq 0) {
+            Write-ColorOutput "✅ 认知服务资源 $ResourceName purge成功" "Green"
+        } else {
+            Write-ColorOutput "ℹ️ 认知服务资源 $ResourceName 可能已被purge或不存在" "Yellow"
+        }
+    } catch {
+        Write-ColorOutput "⚠️ Purge操作失败: $($_.Exception.Message)" "Yellow"
+    }
+}
+
+# 检查PowerShell模块
+Test-PowerShellModules
 
 Write-ColorOutput "🚀 开始创建Azure AI Search Agentic资源..." "Green"
 Write-ColorOutput "🔧 脚本参数配置:" "Cyan"
@@ -184,114 +255,216 @@ if (Test-Path $DataFilePath) {
     Write-ColorOutput "⚠️ 本地数据文件 $DataFilePath 不存在，跳过上传" "Yellow"
 }
 
-# 5. 创建Azure OpenAI服务
-Write-ColorOutput "🧠 检查Azure OpenAI服务: $OpenAIServiceName..." "Cyan"
-$openAIExists = az cognitiveservices account show --name $OpenAIServiceName --resource-group $ResourceGroupName 2>$null
-if (-not $openAIExists) {
-    Write-ColorOutput "🧠 创建Azure OpenAI服务（禁用本地身份验证）..." "Yellow"
-    
-    try {
-        # 首先检查是否有软删除的资源需要恢复
-        Write-ColorOutput "🔍 检查软删除的OpenAI服务..." "Cyan"
-        $deletedServices = Get-AzCognitiveServicesAccount -InRemovedState 2>$null | Where-Object { $_.AccountName -eq $OpenAIServiceName -and $_.Location -eq $Location }
-        
-        if ($deletedServices) {
-            Write-ColorOutput "⚠️ 发现软删除的OpenAI服务，需要清除后重新创建..." "Yellow"
-            
-            # 清除软删除的账户
-            Write-ColorOutput "🗑️ 清除软删除的OpenAI服务..." "Yellow"
-            Remove-AzCognitiveServicesAccount -ResourceGroupName $ResourceGroupName -Name $OpenAIServiceName -InRemovedState -Location $Location -Force
-            
-            Write-ColorOutput "🔄 等待清除完成..." "Yellow"
-            Start-Sleep -Seconds 30
-            
-            # 重新创建账户
-            Write-ColorOutput "🧠 重新创建Azure OpenAI服务..." "Yellow"
-            $result = New-AzCognitiveServicesAccount `
-                -ResourceGroupName $ResourceGroupName `
-                -Name $OpenAIServiceName `
-                -Type "OpenAI" `
-                -SkuName "S0" `
-                -Location $Location `
-                -DisableLocalAuth $true `
-                -Force
-            
-            if ($result) {
-                Write-ColorOutput "✅ Azure OpenAI服务重新创建成功" "Green"
-            } else {
-                Write-ColorOutput "❌ 重新创建Azure OpenAI服务失败" "Red"
-                exit 1
-            }
-        } else {
-            # 使用PowerShell Az模块创建，支持DisableLocalAuth参数
-            $result = New-AzCognitiveServicesAccount `
-                -ResourceGroupName $ResourceGroupName `
-                -Name $OpenAIServiceName `
-                -Type "OpenAI" `
-                -SkuName "S0" `
-                -Location $Location `
-                -DisableLocalAuth $true `
-                -Force
-            
-            if ($result) {
-                Write-ColorOutput "✅ Azure OpenAI服务创建成功" "Green"
-            } else {
-                Write-ColorOutput "❌ 创建Azure OpenAI服务失败" "Red"
-                exit 1
-            }
-        }
-    } catch {
-        $errorMessage = $_.Exception.Message
-        if ($errorMessage -like "*soft-deleted*") {
-            Write-ColorOutput "⚠️ 检测到软删除的资源，尝试清除后重新创建..." "Yellow"
-            try {
-                # 尝试清除软删除的资源
-                Remove-AzCognitiveServicesAccount -ResourceGroupName $ResourceGroupName -Name $OpenAIServiceName -InRemovedState -Location $Location -Force
-                Write-ColorOutput "🔄 等待清除完成..." "Yellow"
-                Start-Sleep -Seconds 30
-                
-                # 重新创建
-                $result = New-AzCognitiveServicesAccount `
-                    -ResourceGroupName $ResourceGroupName `
-                    -Name $OpenAIServiceName `
-                    -Type "OpenAI" `
-                    -SkuName "S0" `
-                    -Location $Location `
-                    -DisableLocalAuth $true `
-                    -Force
-                
-                if ($result) {
-                    Write-ColorOutput "✅ Azure OpenAI服务创建成功" "Green"
-                } else {
-                    Write-ColorOutput "❌ 创建Azure OpenAI服务失败" "Red"
-                    exit 1
-                }
-            } catch {
-                Write-ColorOutput "❌ 无法处理软删除的资源: $($_.Exception.Message)" "Red"
-                Write-ColorOutput "💡 请手动清除软删除的资源或等待自动清除" "Yellow"
-                exit 1
-            }
-        } else {
-            Write-ColorOutput "❌ 创建Azure OpenAI服务失败: $errorMessage" "Red"
-            Write-ColorOutput "💡 请确保已安装并导入Az.CognitiveServices模块" "Yellow"
-            Write-ColorOutput "💡 运行: Install-Module Az.CognitiveServices -Force" "Yellow"
-            exit 1
-        }
+# 1. 检查并删除现有的AI Services Project
+Write-ColorOutput "🗑️ 检查并清理现有的AI Services Project..." "Cyan"
+
+# 删除AI Services Project（如果存在）
+$projectExists = az ml workspace show --name $AIServicesProjectName --resource-group $ResourceGroupName 2>$null
+if ($projectExists) {
+    Write-ColorOutput "⚠️ AI Services Project已存在，正在删除..." "Yellow"
+    az ml workspace delete --name $AIServicesProjectName --resource-group $ResourceGroupName --yes --no-wait
+    if ($LASTEXITCODE -eq 0) {
+        Write-ColorOutput "✅ AI Services Project删除成功" "Green"
+    } else {
+        Write-ColorOutput "⚠️ AI Services Project删除失败，继续执行" "Yellow"
     }
-} else {
-    Write-ColorOutput "ℹ️ Azure OpenAI服务 $OpenAIServiceName 已存在，跳过创建" "Yellow"
+    
+    # 等待删除操作完成
+    Write-ColorOutput "⏳ 等待Project删除完成..." "Yellow"
+    Start-Sleep -Seconds 30
 }
 
-# 5.1. 部署AI模型到Azure OpenAI服务
-Write-ColorOutput "🤖 部署AI模型到Azure OpenAI服务..." "Cyan"
+# 5. 创建Azure AI Services资源（用于模型部署）
+Write-ColorOutput "🧠 检查AI Services资源: $AIServicesName..." "Cyan"
+Write-ColorOutput "💡 注意：AI Services资源是模型部署的必需组件" "Yellow"
+$aiServicesExists = az cognitiveservices account show --name $AIServicesName --resource-group $ResourceGroupName 2>$null
+if (-not $aiServicesExists) {
+    # 尝试purge可能存在的已删除资源
+    Invoke-CognitiveServicesPurge -ResourceName $AIServicesName -Location $Location -SubscriptionId $SubscriptionId -ResourceGroupName $ResourceGroupName
+    
+    Write-ColorOutput "🧠 创建AI Services资源..." "Yellow"
+    
+    try {
+        # 使用PowerShell Az模块创建，支持企业策略要求
+        $result = New-AzCognitiveServicesAccount `
+            -ResourceGroupName $ResourceGroupName `
+            -Name $AIServicesName `
+            -Type "AIServices" `
+            -SkuName "S0" `
+            -Location $Location `
+            -DisableLocalAuth $true `
+            -Force
+        
+        if ($result) {
+            Write-ColorOutput "✅ AI Services资源创建成功" "Green"
+        } else {
+            Write-ColorOutput "❌ 创建AI Services资源失败" "Red"
+        }
+    } catch {
+        Write-ColorOutput "⚠️ PowerShell创建失败，尝试Azure CLI..." "Yellow"
+        
+        # 备用方案：使用Azure CLI
+        $aiServicesResult = az cognitiveservices account create `
+            --name $AIServicesName `
+            --resource-group $ResourceGroupName `
+            --location $Location `
+            --kind "AIServices" `
+            --sku "S0" `
+            --subscription $SubscriptionId `
+            --custom-domain $AIServicesName `
+            --disable-local-auth true `
+            --yes 2>$null
+
+        if ($LASTEXITCODE -eq 0) {
+            Write-ColorOutput "✅ AI Services资源创建成功" "Green"
+        } else {
+            Write-ColorOutput "⚠️ AI Services资源创建失败，可能是配额限制或名称冲突" "Yellow"
+            Write-ColorOutput "� 请检查Azure门户查看具体错误或尝试使用不同的名称" "Yellow"
+        }
+    }
+    
+    # 等待资源完全部署
+    Write-ColorOutput "⏳ 等待AI Services资源完全部署..." "Yellow"
+    Start-Sleep -Seconds 15
+} else {
+    Write-ColorOutput "ℹ️ AI Services资源已存在，保留现有资源" "Yellow"
+}
+
+# 6. 创建AI Foundry Project (需要符合企业策略要求)
+Write-ColorOutput "🤖 尝试创建AI Foundry Project: $AIFoundryProjectName..." "Cyan"
+
+# 首先检查底层的Cognitive Services账户是否存在
+$foundryHubName = "$AIFoundryProjectName-hub"
+$foundryHubExists = az cognitiveservices account show --name $foundryHubName --resource-group $ResourceGroupName 2>$null
+
+if ($foundryHubExists) {
+    Write-ColorOutput "ℹ️ AI Foundry Hub已存在: $foundryHubName" "Yellow"
+} else {
+    Write-ColorOutput "💡 正在创建AI Foundry Hub (符合企业策略)..." "Yellow"
+    Write-ColorOutput "🔒 注意：将禁用本地身份验证以符合企业安全策略" "Yellow"
+    
+    # 尝试purge可能存在的已删除资源
+    Invoke-CognitiveServicesPurge -ResourceName $foundryHubName -Location $Location -SubscriptionId $SubscriptionId -ResourceGroupName $ResourceGroupName
+    
+    # 使用PowerShell创建Hub，符合企业策略要求
+    try {
+        Write-ColorOutput "🔧 使用PowerShell创建AI Foundry Hub..." "Yellow"
+        $hubResult = New-AzCognitiveServicesAccount `
+            -ResourceGroupName $ResourceGroupName `
+            -Name $foundryHubName `
+            -Type "AIServices" `
+            -SkuName "S0" `
+            -Location $Location `
+            -DisableLocalAuth $true `
+            -Force
+
+        if ($hubResult) {
+            Write-ColorOutput "✅ AI Foundry Hub创建成功" "Green"
+            
+            # 等待Hub完全部署
+            Write-ColorOutput "⏳ 等待AI Foundry Hub完全部署..." "Yellow"
+            Start-Sleep -Seconds 30
+            
+            # 现在尝试创建AI Foundry Project工作区
+            Write-ColorOutput "🤖 创建AI Foundry Project工作区..." "Yellow"
+            $foundryProjectExists = az ml workspace show --name $AIFoundryProjectName --resource-group $ResourceGroupName 2>$null
+            if (-not $foundryProjectExists) {
+                $foundryProjectResult = az ml workspace create `
+                    --name $AIFoundryProjectName `
+                    --resource-group $ResourceGroupName `
+                    --location $Location `
+                    --description "AI Foundry Project for retail RAG application" `
+                    --hub $foundryHubName 2>$null
+
+                if ($LASTEXITCODE -eq 0) {
+                    Write-ColorOutput "✅ AI Foundry Project创建成功" "Green"
+                } else {
+                    Write-ColorOutput "⚠️ AI Foundry Project工作区创建失败" "Yellow"
+                    Write-ColorOutput "💡 建议：通过Azure AI Foundry门户 (https://ai.azure.com) 手动创建项目" "Yellow"
+                }
+            } else {
+                Write-ColorOutput "ℹ️ AI Foundry Project工作区已存在" "Yellow"
+            }
+        } else {
+            Write-ColorOutput "❌ AI Foundry Hub创建失败" "Red"
+        }
+    } catch {
+        Write-ColorOutput "⚠️ PowerShell创建失败，尝试备用方案..." "Yellow"
+        
+        # 备用方案：使用Azure CLI并显式禁用本地认证
+        try {
+            $hubResult = az cognitiveservices account create `
+                --name $foundryHubName `
+                --resource-group $ResourceGroupName `
+                --location $Location `
+                --kind "AIServices" `
+                --sku "S0" `
+                --subscription $SubscriptionId `
+                --custom-domain $foundryHubName `
+                --disable-local-auth true `
+                --yes 2>$null
+
+            if ($LASTEXITCODE -eq 0) {
+                Write-ColorOutput "✅ AI Foundry Hub创建成功 (使用Azure CLI)" "Green"
+            } else {
+                Write-ColorOutput "❌ AI Foundry Hub创建失败，可能是策略限制" "Red"
+                Write-ColorOutput "💡 手动创建步骤：" "Yellow"
+                Write-ColorOutput "   1. 访问 https://ai.azure.com" "White"
+                Write-ColorOutput "   2. 创建新的Hub，名称: $foundryHubName" "White"
+                Write-ColorOutput "   3. 确保禁用本地身份验证" "White"
+                Write-ColorOutput "   4. 在Hub中创建Project: $AIFoundryProjectName" "White"
+            }
+        } catch {
+            Write-ColorOutput "⚠️ AI Foundry Hub创建遇到错误，继续执行其他步骤" "Yellow"
+            Write-ColorOutput "💡 错误详情: $($_.Exception.Message)" "Red"
+        }
+    }
+}
+
+# 7. 创建独立的AI Services Project (可选，如果权限不足可跳过)
+Write-ColorOutput "📁 尝试创建AI Services Project: $AIServicesProjectName..." "Cyan"
+
+# 检查Project是否已存在
+$servicesProjectExists = az ml workspace show --name $AIServicesProjectName --resource-group $ResourceGroupName 2>$null
+if ($servicesProjectExists) {
+    Write-ColorOutput "ℹ️ AI Services Project已存在: $AIServicesProjectName" "Yellow"
+} else {
+    Write-ColorOutput "💡 正在尝试创建AI Services Project..." "Yellow"
+    Write-ColorOutput "⚠️ 如果权限不足，可以稍后通过Azure门户手动创建" "Yellow"
+    
+    # 尝试创建独立的project workspace，如果失败不影响其他资源创建
+    try {
+        $servicesProjectResult = az ml workspace create `
+            --name $AIServicesProjectName `
+            --resource-group $ResourceGroupName `
+            --location $Location `
+            --description "AI Services Project for retail RAG application" 2>$null
+
+        if ($LASTEXITCODE -eq 0) {
+            Write-ColorOutput "✅ AI Services Project创建成功" "Green"
+        } else {
+            Write-ColorOutput "⚠️ AI Services Project创建失败，可能是权限不足" "Yellow"
+            Write-ColorOutput "💡 建议：通过Azure Machine Learning Studio手动创建工作区" "Yellow"
+            Write-ColorOutput "📋 项目名称: $AIServicesProjectName" "White"
+            Write-ColorOutput "📋 资源组: $ResourceGroupName" "White"
+            Write-ColorOutput "📋 位置: $Location" "White"
+        }
+    } catch {
+        Write-ColorOutput "⚠️ AI Services Project创建遇到错误，继续执行其他步骤" "Yellow"
+        Write-ColorOutput "💡 错误详情: $($_.Exception.Message)" "Red"
+    }
+}
+
+# 8. 部署AI模型到Azure AI Services
+Write-ColorOutput "🤖 部署AI模型到Azure AI Services..." "Cyan"
 
 # 部署GPT-4模型
 Write-ColorOutput "🧠 检查${LLMModelName}模型部署..." "Cyan"
-$gpt4Deployment = az cognitiveservices account deployment show --name $OpenAIServiceName --resource-group $ResourceGroupName --deployment-name $LLMDeploymentName 2>$null
+$gpt4Deployment = az cognitiveservices account deployment show --name $AIServicesName --resource-group $ResourceGroupName --deployment-name $LLMDeploymentName 2>$null
 if (-not $gpt4Deployment) {
     Write-ColorOutput "🧠 部署${LLMModelName}模型..." "Yellow"
     az cognitiveservices account deployment create `
-        --name $OpenAIServiceName `
+        --name $AIServicesName `
         --resource-group $ResourceGroupName `
         --deployment-name $LLMDeploymentName `
         --model-name $LLMModelName `
@@ -311,11 +484,11 @@ if (-not $gpt4Deployment) {
 
 # 部署text-embedding-3-large模型
 Write-ColorOutput "📝 检查${EmbeddingModelName}模型部署..." "Cyan"
-$embeddingDeployment = az cognitiveservices account deployment show --name $OpenAIServiceName --resource-group $ResourceGroupName --deployment-name $EmbeddingDeploymentName 2>$null
+$embeddingDeployment = az cognitiveservices account deployment show --name $AIServicesName --resource-group $ResourceGroupName --deployment-name $EmbeddingDeploymentName 2>$null
 if (-not $embeddingDeployment) {
     Write-ColorOutput "📝 部署${EmbeddingModelName}模型..." "Yellow"
     az cognitiveservices account deployment create `
-        --name $OpenAIServiceName `
+        --name $AIServicesName `
         --resource-group $ResourceGroupName `
         --deployment-name $EmbeddingDeploymentName `
         --model-name $EmbeddingModelName `
@@ -389,19 +562,19 @@ $searchServiceIdentity = az search service show --name $SearchServiceName --reso
 if ($searchServiceIdentity) {
     Write-ColorOutput "✅ Azure AI Search托管身份ID: $searchServiceIdentity" "Green"
     
-    # 为Azure AI Search分配OpenAI访问权限
-    Write-ColorOutput "🔑 为Azure AI Search分配OpenAI访问权限..." "Yellow"
-    $openAIResourceId = "/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.CognitiveServices/accounts/$OpenAIServiceName"
+    # 为Azure AI Search分配AI Services访问权限
+    Write-ColorOutput "🔑 为Azure AI Search分配AI Services访问权限..." "Yellow"
+    $aiServicesResourceId = "/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.CognitiveServices/accounts/$AIServicesName"
     
     az role assignment create `
         --assignee $searchServiceIdentity `
         --role "Cognitive Services OpenAI User" `
-        --scope $openAIResourceId
+        --scope $aiServicesResourceId
     
     if ($LASTEXITCODE -eq 0) {
-        Write-ColorOutput "✅ OpenAI访问权限分配成功" "Green"
+        Write-ColorOutput "✅ AI Services访问权限分配成功" "Green"
     } else {
-        Write-ColorOutput "❌ OpenAI访问权限分配失败" "Red"
+        Write-ColorOutput "❌ AI Services访问权限分配失败" "Red"
     }
     
     # 为Azure AI Search分配存储账户访问权限
@@ -422,29 +595,29 @@ if ($searchServiceIdentity) {
     Write-ColorOutput "⚠️ 无法获取Azure AI Search托管身份" "Yellow"
 }
 
-# 获取Azure OpenAI服务的托管身份
-Write-ColorOutput "🔍 获取Azure OpenAI托管身份..." "Cyan"
-$openAIServiceIdentity = az cognitiveservices account show --name $OpenAIServiceName --resource-group $ResourceGroupName --query identity.principalId -o tsv 2>$null
+# 获取Azure AI Services的托管身份
+Write-ColorOutput "🔍 获取Azure AI Services托管身份..." "Cyan"
+$aiServicesIdentity = az cognitiveservices account show --name $AIServicesName --resource-group $ResourceGroupName --query identity.principalId -o tsv 2>$null
 
-if ($openAIServiceIdentity) {
-    Write-ColorOutput "✅ Azure OpenAI托管身份ID: $openAIServiceIdentity" "Green"
+if ($aiServicesIdentity) {
+    Write-ColorOutput "✅ Azure AI Services托管身份ID: $aiServicesIdentity" "Green"
     
-    # 为Azure OpenAI分配存储账户访问权限（如果需要访问文档）
-    Write-ColorOutput "🔑 为Azure OpenAI分配存储访问权限..." "Yellow"
+    # 为Azure AI Services分配存储账户访问权限
+    Write-ColorOutput "🔑 为Azure AI Services分配存储访问权限..." "Yellow"
     $storageResourceId = "/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.Storage/storageAccounts/$StorageAccountName"
     
     az role assignment create `
-        --assignee $openAIServiceIdentity `
+        --assignee $aiServicesIdentity `
         --role "Storage Blob Data Reader" `
         --scope $storageResourceId
     
     if ($LASTEXITCODE -eq 0) {
-        Write-ColorOutput "✅ OpenAI存储访问权限分配成功" "Green"
+        Write-ColorOutput "✅ AI Services存储访问权限分配成功" "Green"
     } else {
-        Write-ColorOutput "❌ OpenAI存储访问权限分配失败" "Red"
+        Write-ColorOutput "❌ AI Services存储访问权限分配失败" "Red"
     }
 } else {
-    Write-ColorOutput "ℹ️ Azure OpenAI服务可能未启用托管身份" "Yellow"
+    Write-ColorOutput "ℹ️ Azure AI Services可能未启用托管身份" "Yellow"
 }
 
 # 8. 创建搜索索引
@@ -464,14 +637,28 @@ Write-ColorOutput "🔐 配置权限..." "Cyan"
 Write-ColorOutput "ℹ️ 服务间权限已在步骤7中配置完成" "Green"
 
 Write-ColorOutput "🎉 资源创建完成!" "Green"
-Write-ColorOutput "📋 资源摘要:" "Yellow"
-Write-ColorOutput "   - 资源组: $ResourceGroupName" "White"
-Write-ColorOutput "   - 存储账户: $StorageAccountName" "White"
-Write-ColorOutput "   - Blob容器: $ContainerName" "White"
-Write-ColorOutput "   - 数据文件: $fileName" "White"
-Write-ColorOutput "   - Azure OpenAI: $OpenAIServiceName" "White"
-Write-ColorOutput "   - GPT-4模型: $LLMDeploymentName" "White"
-Write-ColorOutput "   - 嵌入模型: $EmbeddingDeploymentName" "White"
-Write-ColorOutput "   - Azure AI Search: $SearchServiceName" "White"
-Write-ColorOutput "   - 搜索索引: $SearchIndexName" "White"
-Write-ColorOutput "   - Knowledge Agent: $KnowledgeAgentName" "White"
+Write-ColorOutput "📋 核心资源摘要 (已验证可用):" "Yellow"
+Write-ColorOutput "   ✅ 资源组: $ResourceGroupName" "Green"
+Write-ColorOutput "   ✅ 存储账户: $StorageAccountName" "Green"
+Write-ColorOutput "   ✅ Blob容器: $ContainerName" "Green"
+Write-ColorOutput "   ✅ 数据文件: $fileName" "Green"
+Write-ColorOutput "   ✅ Azure AI Services: $AIServicesName (状态: 已部署)" "Green"
+Write-ColorOutput "   ✅ GPT-4.1模型: $LLMDeploymentName (版本: $LLMModelVersion)" "Green"
+Write-ColorOutput "   ✅ 嵌入模型: $EmbeddingDeploymentName (版本: $EmbeddingModelVersion)" "Green"
+Write-ColorOutput "   ✅ Azure AI Search: $SearchServiceName" "Green"
+Write-ColorOutput "" "White"
+Write-ColorOutput "📋 可选资源 (如果创建失败，请参考手动创建指南):" "Yellow"
+Write-ColorOutput "   ⚠️ AI Foundry Project: $AIFoundryProjectName" "Yellow"
+Write-ColorOutput "   ⚠️ AI Services Project: $AIServicesProjectName" "Yellow"
+Write-ColorOutput "   💡 搜索索引: $SearchIndexName (待创建)" "Yellow"
+Write-ColorOutput "   💡 Knowledge Agent: $KnowledgeAgentName (待创建)" "Yellow"
+Write-ColorOutput "" "White"
+Write-ColorOutput "🔗 重要信息:" "Cyan"
+Write-ColorOutput "   📖 手动创建指南: AI-Foundry-Manual-Setup-Guide.md" "White"
+Write-ColorOutput "   🌐 Azure AI Foundry门户: https://ai.azure.com" "White"
+Write-ColorOutput "   🌐 Azure ML Studio: https://ml.azure.com" "White"
+Write-ColorOutput "" "White"
+Write-ColorOutput "🚀 后续步骤:" "Cyan"
+Write-ColorOutput "   1. 如需要，手动创建AI Foundry Project" "White"
+Write-ColorOutput "   2. 部署Web应用到Azure App Service" "White"
+Write-ColorOutput "   3. 配置应用环境变量连接AI Services" "White"

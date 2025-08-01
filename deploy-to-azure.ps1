@@ -3,19 +3,19 @@
 
 param(
     [Parameter(Mandatory=$false)]
-    [string]$ResourceGroupName = "t-mos",
+    [string]$ResourceGroupName = "jiantmo-rg",
     
     [Parameter(Mandatory=$false)]
-    [string]$AppServiceName = "retail-rag-web-app",
+    [string]$AppServiceName = "jiantmo-retail-rag-web-app",
     
     [Parameter(Mandatory=$false)]
-    [string]$Location = "East US",
+    [string]$Location = "North Central US",
     
     [Parameter(Mandatory=$false)]
     [string]$SubscriptionId = "0f7690ff-3bdf-4d45-9eda-cabd997016d8",
     
     [Parameter(Mandatory=$false)]
-    [string]$AppServicePlan = "retail-app-plan"
+    [string]$AppServicePlan = "jiantmo-retail-app-plan"
 )
 
 Write-Host "🚀 开始部署 retail-rag-web-app 到 Azure..." -ForegroundColor Green
