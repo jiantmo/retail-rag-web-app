@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Dataverse Formatting</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Test Dataverse Formatting</h1>
+    
+    <div id="testResults"></div>
+    
+    <script>
+        // Sample Dataverse response based on server logs
+        const sampleDataverseResponse = {
+            "error": null,
+            "query": {
+                "tSql": "SELECT TOP(30) new_productname, new_productdescription AS [description], new_productid, statecodename AS [status], [new_colors] AS [colors], [new_totalratings] AS [totalratings], [createdon] AS [created_on], [new_price] AS [price], [new_productnumber] AS [productnumber] FROM new_product WITH (NOLOCK) WHERE new_productname IN ('prative gloves', 'sterse gloves', 'meltick gloves')",
+                "explanation": "Explanation: The query retrieves details like **Product Name**, **Description**, **Status**, **Colors**, **Total Ratings**, **Created On**, **Price**, and **Product Number** from the **new_product** table."
+            },
+            "queryResult": {
+                "result": [
+                    {
+                        "productnumber": "64302",
+                        "totalratings": 0,
+                        "description": "Our winter gloves are timeless for both men and women. They can not only keep you warm but also a kind of stylish in cold winter.",
+                        "price": "$30.00",
+                        "new_productname": "Prative Gloves",
+                        "new_productid": "4134607b-dc6b-f011-bec3-000d3a5b9d27",
+                        "created_on": "2025-07-28T17:58:36Z",
+                        "transactioncurrencyid": "US Dollar",
+                        "status": "Active",
+                        "colors": "Wool",
+                        "@recordLinks": [
+                            "https://aurorabapenv87b96.crm10.dynamics.com/main.aspx?forceUCI=1&newWindow=true&pagetype=entityrecord&etn=new_product&id=4134607b-dc6b-f011-bec3-000d3a5b9d27"
+                        ],
+                        "@primaryNameValue": "Prative Gloves"
+                    },
+                    {
+                        "productnumber": "64301",
+                        "totalratings": 0,
+                        "description": "Our leather is created during the tanning process, ensuring the water-resistance that won't rub off over time. Reinforced leather palm, thumb, and finger patches increase overall wear, grip, and durability.",
+                        "price": "$42.00",
+                        "new_productname": "Sterse Gloves",
+                        "new_productid": "4234607b-dc6b-f011-bec3-000d3a5b9d27",
+                        "created_on": "2025-07-28T17:58:36Z",
+                        "transactioncurrencyid": "US Dollar",
+                        "status": "Active",
+                        "colors": "Leather",
+                        "@recordLinks": [
+                            "https://aurorabapenv87b96.crm10.dynamics.com/main.aspx?forceUCI=1&newWindow=true&pagetype=entityrecord&etn=new_product&id=4234607b-dc6b-f011-bec3-000d3a5b9d27"
+                        ],
+                        "@primaryNameValue": "Sterse Gloves"
+                    }
+                ],
+                "maxRowsExceeded": false,
+                "summary": "There are 2 glove products available, all currently active and priced between $30.00 and $42.00 in US Dollars.",
+                "links": [
+                    "https://aurorabapenv87b96.crm10.dynamics.com/main.aspx?forceUCI=1&newWindow=true&pagetype=entitylist&etn=new_product"
+                ]
+            },
+            "history": null,
+            "additionalProperties": {}
+        };
+
+        // Copy the formatDataverseResults function from the main page
+        function escapeHtml(text) {
+            if (!text) return '';
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
+        function formatDataverseProduct(product) {
+            const productName = escapeHtml(product.new_productname || 'Unknown Product');
+            const price = escapeHtml(product.price || 'N/A');
+            const description = escapeHtml(product.description || 'No description available');
+            const colors = escapeHtml(product.colors || 'N/A');
+            const status = escapeHtml(product.status || 'N/A');
+            const productNumber = escapeHtml(product.productnumber || 'N/A');
+            const totalRatings = product.totalratings || 0;
+            const recordLink = product['@recordLinks'] && product['@recordLinks'].length > 0 ? product['@recordLinks'][0] : '';
+
+            return `
+                <div class="product-card mb-3 p-3 border rounded">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6 class="product-title mb-2">
+                                <i class="fas fa-tag me-2"></i>${productName}
+                                ${recordLink ? `<a href="${recordLink}" target="_blank" class="ms-2"><i class="fas fa-external-link-alt"></i></a>` : ''}
+                            </h6>
+                            <p class="product-description text-muted mb-2">${description}</p>
+                            <div class="product-details">
+                                <small class="text-muted">
+                                    <span class="me-3"><i class="fas fa-palette me-1"></i>Color: ${colors}</span>
+                                    <span class="me-3"><i class="fas fa-info-circle me-1"></i>Status: ${status}</span>
+                                    <span class="me-3"><i class="fas fa-barcode me-1"></i>SKU: ${productNumber}</span>
+                                    <span><i class="fas fa-star me-1"></i>Ratings: ${totalRatings}</span>
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <h5 class="price text-success mb-0">${price}</h5>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatDataverseResults(dataverseResult) {
+            console.log('🔧 formatDataverseResults called with:', dataverseResult);
+            
+            if (!dataverseResult || !dataverseResult.queryResult) {
+                console.log('❌ Missing queryResult in dataverseResult');
+                return '<div class="alert alert-warning">No Dataverse results structure found.</div>';
+            }
+
+            const queryResult = dataverseResult.queryResult;
+            const products = queryResult.result || [];
+            const summary = queryResult.summary;
+            
+            console.log('🔧 Found products:', products.length);
+            console.log('🔧 Summary:', summary);
+
+            let resultsHtml = '<div class="dataverse-results">';
+
+            // Add summary if available
+            if (summary) {
+                resultsHtml += `
+                    <div class="summary-section mb-4">
+                        <h5><i class="fas fa-chart-line me-2"></i>Search Summary</h5>
+                        <div class="alert alert-info border-0 rounded-4">
+                            <p class="mb-0">${escapeHtml(summary)}</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Add products if available
+            if (products && products.length > 0) {
+                resultsHtml += `
+                    <div class="products-section">
+                        <h5><i class="fas fa-box me-2"></i>Products Found (${products.length})</h5>
+                        <div class="products-container">
+                `;
+
+                products.forEach((product, index) => {
+                    resultsHtml += formatDataverseProduct(product);
+                });
+
+                resultsHtml += '</div></div>';
+            } else {
+                resultsHtml += '<div class="alert alert-warning">No products found in the results.</div>';
+            }
+
+            resultsHtml += '</div>';
+            
+            console.log('🔧 Generated HTML length:', resultsHtml.length);
+            return resultsHtml;
+        }
+
+        // Test the formatting function
+        function runTest() {
+            const resultsDiv = document.getElementById('testResults');
+            
+            try {
+                console.log('🧪 Starting test...');
+                const formattedResult = formatDataverseResults(sampleDataverseResponse);
+                
+                resultsDiv.innerHTML = `
+                    <div class="test-result success">
+                        <h3>✅ Test Passed</h3>
+                        <p>formatDataverseResults function executed successfully.</p>
+                        <p><strong>Generated HTML length:</strong> ${formattedResult.length} characters</p>
+                        <details>
+                            <summary>Generated HTML (click to expand)</summary>
+                            <pre>${escapeHtml(formattedResult)}</pre>
+                        </details>
+                        <h4>Rendered Output:</h4>
+                        <div style="border: 1px solid #ddd; padding: 15px; background-color: #fff;">
+                            ${formattedResult}
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('🧪 Test failed:', error);
+                resultsDiv.innerHTML = `
+                    <div class="test-result error">
+                        <h3>❌ Test Failed</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <pre>${error.stack}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        // Run test when page loads
+        window.addEventListener('load', runTest);
+    </script>
+</body>
+</html>

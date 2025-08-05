@@ -5,14 +5,17 @@ using System.Threading.Tasks;
 
 namespace retail_rag_web_app.Controllers
 {
+    [Route("[controller]")]
     public class SearchController : Controller
     {
         private readonly RagService _ragService;
+        private readonly DataverseService _dataverseService;
         private readonly ILogger<SearchController> _logger;
 
-        public SearchController(RagService ragService, ILogger<SearchController> logger)
+        public SearchController(RagService ragService, DataverseService dataverseService, ILogger<SearchController> logger)
         {
             _ragService = ragService;
+            _dataverseService = dataverseService;
             _logger = logger;
         }
 
@@ -77,6 +80,39 @@ namespace retail_rag_web_app.Controllers
             {
                 _logger.LogError(ex, "Error processing search request: {Error}", ex.Message);
                 return Json(new { success = false, error = "An error occurred while processing your request." });
+            }
+        }
+
+        [HttpPost("dataverse")]
+        public async Task<IActionResult> DataverseSearch([FromBody] DataverseSearchRequest request)
+        {
+            try
+            {
+                _logger.LogInformation("Received Dataverse search request for query: {Query}", request?.QueryText);
+                
+                if (request == null || string.IsNullOrWhiteSpace(request.QueryText))
+                {
+                    _logger.LogWarning("Dataverse search request is null or empty");
+                    return BadRequest(new { success = false, error = "Query text is required for Dataverse search." });
+                }
+
+                var result = await _dataverseService.SearchAsync(request.QueryText, request.BearerToken);
+                
+                if (result.Success)
+                {
+                    _logger.LogInformation("Dataverse search completed successfully");
+                    return Json(new { success = true, result });
+                }
+                else
+                {
+                    _logger.LogWarning("Dataverse search failed: {Error}", result.Error);
+                    return Json(new { success = false, error = result.Error });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing Dataverse search request: {Error}", ex.Message);
+                return Json(new { success = false, error = "An error occurred while processing your Dataverse search request." });
             }
         }
 

@@ -1,0 +1,1832 @@
+@{
+    ViewData["Title"] = "AI Product Search - DEBUG MODE";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <div class="search-container">
+                <!-- Header -->
+                <div class="search-header">
+                    <h2>
+                        <i class="fas fa-sparkles me-2"></i>
+                        AI Product Assistant
+                        <span style="color: red; font-size: 0.8em;">[DEBUG MODE]</span>
+                    </h2>
+                    <p>Ask me anything about products! I'll help you find the perfect items using advanced AI.</p>
+                    
+                    <!-- Feature Badges -->
+                    <div class="mt-3">
+                        <span class="feature-badge">
+                            <i class="fas fa-brain"></i>
+                            Natural Language Processing
+                        </span>
+                        <span class="feature-badge">
+                            <i class="fas fa-rocket"></i>
+                            Real-time Search
+                        </span>
+                        <span class="feature-badge">
+                            <i class="fas fa-star"></i>
+                            Personalized Results
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Search Form -->
+                <form id="searchForm">
+                    <div class="chat-input-container">
+                        <label for="searchQuery" class="form-label text-white fw-semibold mb-3">
+                            <i class="fas fa-comment-dots me-2"></i>
+                            What are you looking for today?
+                        </label>
+                        <textarea 
+                            class="form-control chat-input" 
+                            id="searchQuery" 
+                            name="searchQuery"
+                            placeholder="e.g., What's the best gift options for my 12-year-old daughter? I want something educational but fun, ideally under $50..."
+                            rows="4"></textarea>
+                    </div>
+
+                    <!-- Search Buttons -->
+                    <!-- Search Buttons -->
+                    <div class="search-buttons d-flex gap-3 mb-3">
+                        <div class="flex-fill">
+                            <button type="button" class="btn search-btn btn-rag w-100 h-100" id="ragSearchBtn">
+                                <i class="fas fa-search me-2"></i>
+                                <div>
+                                    <div>RAG Search</div>
+                                    <div class="btn-description">Fast semantic search</div>
+                                </div>
+                            </button>
+                        </div>
+                        <div class="flex-fill">
+                            <button type="button" class="btn search-btn btn-agentic w-100 h-100" id="agenticSearchBtn">
+                                <i class="fas fa-brain me-2"></i>
+                                <div>
+                                    <div>Agentic Search</div>
+                                    <div class="btn-description">AI-powered reasoning</div>
+                                </div>
+                            </button>
+                        </div>
+                        <div class="flex-fill">
+                            <button type="button" class="btn search-btn btn-dataverse w-100 h-100" id="dataverseSearchBtn">
+                                <i class="fas fa-database me-2"></i>
+                                <div>
+                                    <div>Dataverse Search</div>
+                                    <div class="btn-description">Enterprise data search</div>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Dataverse Token Input (Collapsible) -->
+                    <div class="dataverse-token-container mb-3" style="display: none;" id="tokenContainer">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body p-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-key text-primary me-2"></i>
+                                    <label for="dataverseToken" class="form-label mb-0 fw-semibold">Dataverse Bearer Token</label>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary ms-auto" id="hideTokenBtn">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <textarea class="form-control" 
+                                          id="dataverseToken" 
+                                          rows="3"
+                                          placeholder="Paste your Dataverse Bearer token here (required for Dataverse search)"
+                                          title="Paste your Dataverse access token here"></textarea>
+                                <small class="text-muted d-block mt-2">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    This token is required to authenticate with Dataverse API
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Example Queries -->
+                <div class="example-queries">
+                    <h6>
+                        <i class="fas fa-lightbulb"></i>
+                        Try these examples:
+                    </h6>
+                    <div class="d-flex flex-wrap">
+                        <span class="example-query" data-query="What's the best gift for my 12-year-old daughter?">
+                            <i class="fas fa-gift me-1"></i>
+                            Gift for 12-year-old daughter
+                        </span>
+                        <span class="example-query" data-query="I need comfortable running shoes under $100">
+                            <i class="fas fa-running me-1"></i>
+                            Running shoes under $100
+                        </span>
+                        <span class="example-query" data-query="Show me wireless headphones with good battery life">
+                            <i class="fas fa-headphones me-1"></i>
+                            Wireless headphones
+                        </span>
+                        <span class="example-query" data-query="What's trending in men's fashion this season?">
+                            <i class="fas fa-tshirt me-1"></i>
+                            Men's fashion trends
+                        </span>
+                        <span class="example-query" data-query="Best laptop for college students under $800">
+                            <i class="fas fa-laptop me-1"></i>
+                            College laptop under $800
+                        </span>
+                        <span class="example-query" data-query="Eco-friendly kitchen appliances">
+                            <i class="fas fa-leaf me-1"></i>
+                            Eco-friendly kitchen
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Loading Indicator -->
+                <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <p><i class="fas fa-magic me-2"></i>Searching for the perfect products...</p>
+                </div>
+
+                <!-- Results Container -->
+                <div id="searchResults" class="search-results-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Backend processing approach - version 3.0
+        console.log('🚀 Agentic Search JavaScript v3.0 loaded - Backend Processing');
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded - Backend processing mode enabled');
+            
+            // Better jQuery detection - don't require version info
+            let jQueryLoaded = false;
+            if (typeof window.$ !== 'undefined' && window.$) {
+                jQueryLoaded = true;
+                console.log('jQuery loaded via $');
+            } else if (typeof window.jQuery !== 'undefined' && window.jQuery) {
+                window.$ = window.jQuery; // Assign jQuery to $
+                jQueryLoaded = true;
+                console.log('jQuery loaded via jQuery global');
+            } else {
+                console.log('jQuery not available, using vanilla JS only');
+            }
+
+            // Add typing animation to placeholder
+            const placeholders = [
+                "What's the best gift for my 12-year-old daughter?",
+                "I need comfortable running shoes under $100",
+                "Show me wireless headphones with good battery life",
+                "What's trending in men's fashion this season?",
+                "Best laptop for college students under $800"
+            ];
+            
+            let placeholderIndex = 0;
+            
+            function animatePlaceholder() {
+                const textarea = document.getElementById('searchQuery');
+                if (textarea) {
+                    const currentPlaceholder = placeholders[placeholderIndex];
+                    textarea.setAttribute('placeholder', currentPlaceholder);
+                    placeholderIndex = (placeholderIndex + 1) % placeholders.length;
+                }
+            }
+            
+            // Change placeholder every 3 seconds
+            setTimeout(() => {
+                setInterval(animatePlaceholder, 3000);
+            }, 1000);
+
+            // Example query click handlers using event delegation
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('example-query')) {
+                    const query = e.target.getAttribute('data-query');
+                    const searchQuery = document.getElementById('searchQuery');
+                    if (searchQuery) {
+                        searchQuery.value = query;
+                        searchQuery.focus();
+                    }
+                    
+                    // Add ripple effect
+                    e.target.classList.add('clicked');
+                    setTimeout(() => e.target.classList.remove('clicked'), 300);
+                }
+            });
+
+            // RAG Search button click
+            const ragSearchBtn = document.getElementById('ragSearchBtn');
+            if (ragSearchBtn) {
+                console.log('✅ RAG Search button found and event listener attached');
+                ragSearchBtn.addEventListener('click', function() {
+                    console.log('🔥 RAG Search button clicked!');
+                    performSearch('rag');
+                });
+            } else {
+                console.error('❌ RAG Search button not found!');
+            }
+
+            // Agentic Search button click
+            const agenticSearchBtn = document.getElementById('agenticSearchBtn');
+            if (agenticSearchBtn) {
+                agenticSearchBtn.addEventListener('click', function() {
+                    performSearch('agentic');
+                });
+            }
+
+            // Dataverse Search button click
+            const dataverseSearchBtn = document.getElementById('dataverseSearchBtn');
+            if (dataverseSearchBtn) {
+                dataverseSearchBtn.addEventListener('click', function() {
+                    const tokenContainer = document.getElementById('tokenContainer');
+                    const dataverseToken = document.getElementById('dataverseToken');
+                    
+                    // Show token container if hidden
+                    if (tokenContainer.style.display === 'none') {
+                        tokenContainer.style.display = 'block';
+                        dataverseToken.focus();
+                        return;
+                    }
+                    
+                    // Check if token is provided
+                    if (!dataverseToken.value.trim()) {
+                        alert('Please provide a Bearer token for Dataverse search');
+                        dataverseToken.focus();
+                        return;
+                    }
+                    
+                    performSearch('dataverse');
+                });
+            }
+
+            // Hide token container button
+            const hideTokenBtn = document.getElementById('hideTokenBtn');
+            if (hideTokenBtn) {
+                hideTokenBtn.addEventListener('click', function() {
+                    const tokenContainer = document.getElementById('tokenContainer');
+                    tokenContainer.style.display = 'none';
+                });
+            }
+
+            // Enter key handler for textarea
+            const searchQuery = document.getElementById('searchQuery');
+            if (searchQuery) {
+                searchQuery.addEventListener('keydown', function(e) {
+                    if (e.ctrlKey && e.keyCode === 13) { // Ctrl+Enter
+                        performSearch('rag');
+                    } else if (e.shiftKey && e.keyCode === 13) { // Shift+Enter
+                        performSearch('agentic');
+                    }
+                });
+
+                // Auto-resize textarea
+                searchQuery.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = Math.max(140, this.scrollHeight) + 'px';
+                });
+            }
+
+            function performSearch(searchType) {
+                console.log('🚀 performSearch called with searchType:', searchType);
+                const queryElement = document.getElementById('searchQuery');
+                const query = queryElement ? queryElement.value.trim() : '';
+                console.log('📝 Query text:', query);
+                
+                if (!query) {
+                    console.log('⚠️ No query provided, showing toast');
+                    showToast('Please enter a search query', 'warning');
+                    if (queryElement) queryElement.focus();
+                    return;
+                }
+
+                // Show loading indicator with animation
+                const loadingElement = document.getElementById('loadingIndicator');
+                const resultsElement = document.getElementById('searchResults');
+                
+                if (loadingElement) {
+                    loadingElement.style.display = 'block';
+                    loadingElement.style.opacity = '1';
+                }
+                
+                if (resultsElement) {
+                    resultsElement.innerHTML = '';
+                }
+
+                // Disable buttons during search
+                const ragBtn = document.getElementById('ragSearchBtn');
+                const agenticBtn = document.getElementById('agenticSearchBtn');
+                const dataverseBtn = document.getElementById('dataverseSearchBtn');
+                
+                if (ragBtn) {
+                    ragBtn.disabled = true;
+                    ragBtn.classList.add('searching');
+                }
+                if (agenticBtn) {
+                    agenticBtn.disabled = true;
+                    agenticBtn.classList.add('searching');
+                }
+                if (dataverseBtn) {
+                    dataverseBtn.disabled = true;
+                    dataverseBtn.classList.add('searching');
+                }
+
+                // Determine endpoint based on search type
+                let endpoint, requestBody;
+                if (searchType === 'agentic') {
+                    endpoint = '/agentic/search';
+                    requestBody = JSON.stringify({ query: query });
+                } else if (searchType === 'dataverse') {
+                    endpoint = '/search/dataverse';
+                    const dataverseToken = document.getElementById('dataverseToken').value.trim();
+                    requestBody = JSON.stringify({ 
+                        queryText: query,
+                        skill: '',  // Will be set by the backend
+                        options: ['GetResultsSummary'],
+                        additionalProperties: { ExecuteUnifiedSearch: true },
+                        bearerToken: dataverseToken || null  // Include the token if provided
+                    });
+                } else {
+                    endpoint = '/search/execute';
+                    requestBody = JSON.stringify({ query: query });
+                }
+
+                // Make API call using fetch API
+                fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: requestBody
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(`HTTP ${response.status}: ${text}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('🚀 Search response received:', data);
+                    console.log('🚀 Data type:', typeof data);
+                    console.log('🚀 Data success property:', data.success);
+                    console.log('🚀 Data result property exists:', !!data.result);
+                    console.log('🚀 Search type:', searchType);
+                    displayResults(data, searchType);
+                    showToast('Search completed successfully!', 'success');
+                })
+                .catch(error => {
+                    console.error('Search error:', error);
+                    let errorMessage = 'An error occurred while searching. Please try again.';
+                    
+                    if (error.message.includes('timeout')) {
+                        errorMessage = 'Search timeout. Please try a simpler query.';
+                    } else if (error.message) {
+                        errorMessage = error.message;
+                    }
+                    
+                    if (resultsElement) {
+                        resultsElement.innerHTML = `
+                            <div class="search-results">
+                                <div class="alert alert-danger border-0 rounded-4">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>Search Error:</strong> ${errorMessage}
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    showToast('Search failed', 'error');
+                })
+                .finally(() => {
+                    // Hide loading indicator and re-enable buttons
+                    if (loadingElement) {
+                        loadingElement.style.display = 'none';
+                    }
+                    
+                    if (ragBtn) {
+                        ragBtn.disabled = false;
+                        ragBtn.classList.remove('searching');
+                    }
+                    if (agenticBtn) {
+                        agenticBtn.disabled = false;
+                        agenticBtn.classList.remove('searching');
+                    }
+                    if (dataverseBtn) {
+                        dataverseBtn.disabled = false;
+                        dataverseBtn.classList.remove('searching');
+                    }
+                });
+            }
+
+            function displayResults(response, searchType) {
+                console.log('🎯 DisplayResults called with:');
+                console.log('🎯 response:', response);
+                console.log('🎯 searchType:', searchType);
+                console.log('🎯 response.success:', response.success);
+                console.log('🎯 response.result exists:', !!response.result);
+                console.log('🎯 typeof response.result:', typeof response.result);
+                
+                let resultContent = '';
+                
+                // Determine the search type label and icon
+                let searchTypeLabel, searchTypeIcon;
+                if (searchType === 'agentic') {
+                    searchTypeLabel = 'Agentic Retrieval';
+                    searchTypeIcon = 'fa-brain';
+                } else if (searchType === 'dataverse') {
+                    searchTypeLabel = 'Dataverse Search';
+                    searchTypeIcon = 'fa-database';
+                } else {
+                    searchTypeLabel = 'RAG Semantic Search';
+                    searchTypeIcon = 'fa-robot';
+                }
+                
+                if (response.success && response.result) {
+                    console.log('✅ Success condition passed - response.success && response.result');
+                    let actualResult = '';
+                    let activityInfo = '';
+                    let referencesInfo = '';
+                    let queryBreakdownHtml = '';
+                    
+                    console.log('✅ Response success, searchType:', searchType);
+                    console.log('✅ response.result type:', typeof response.result);
+                    
+                    // Handle Dataverse search results
+                    if (searchType === 'dataverse' && response.result) {
+                        console.log('🔍 Processing Dataverse search response');
+                        console.log('Dataverse response:', JSON.stringify(response, null, 2));
+                        
+                        const dataverseResult = response.result;
+                        console.log('🔍 dataverseResult type:', typeof dataverseResult);
+                        
+                        if (dataverseResult && dataverseResult.rawApiResponse) {
+                            console.log('📊 Found rawApiResponse, parsing JSON...');
+                            try {
+                                const apiResponse = JSON.parse(dataverseResult.rawApiResponse);
+                                console.log('📊 Parsed API response:', apiResponse);
+                                
+                                if (apiResponse.queryResult && apiResponse.queryResult.result) {
+                                    console.log('📦 Found queryResult structure with products');
+                                    console.log('📦 Products count:', apiResponse.queryResult.result.length);
+                                    actualResult = formatDataverseResults(apiResponse);
+                                    console.log('📦 Generated actualResult length:', actualResult.length);
+                                    console.log('📦 actualResult preview (first 200 chars):', actualResult.substring(0, 200));
+                                } else {
+                                    console.log('❌ No queryResult.result found in API response');
+                                    console.log('❌ API response keys:', Object.keys(apiResponse));
+                                    actualResult = '<div class="alert alert-info border-0 rounded-4"><i class="fas fa-info-circle me-2"></i>No results found in Dataverse.</div>';
+                                }
+                            } catch (parseError) {
+                                console.error('❌ Error parsing rawApiResponse JSON:', parseError);
+                                actualResult = '<div class="alert alert-danger border-0 rounded-4"><i class="fas fa-exclamation-triangle me-2"></i>Error parsing Dataverse response.</div>';
+                            }
+                        } else if (dataverseResult && dataverseResult.summary) {
+                            console.log('📦 Found summary only response');
+                            actualResult = `
+                                <div class="dataverse-summary">
+                                    <h5><i class="fas fa-chart-line me-2"></i>Search Summary</h5>
+                                    <div class="alert alert-info border-0 rounded-4">
+                                        <p class="mb-0">${escapeHtml(dataverseResult.summary)}</p>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            console.log('❌ No recognizable data structure found');
+                            console.log('❌ dataverseResult keys:', dataverseResult ? Object.keys(dataverseResult) : 'null');
+                            actualResult = '<div class="alert alert-info border-0 rounded-4"><i class="fas fa-info-circle me-2"></i>No results found in Dataverse.</div>';
+                        }
+                        
+                        console.log('🔍 Final actualResult for Dataverse:', actualResult ? actualResult.substring(0, 200) + '...' : 'EMPTY');
+                    }
+                    // Handle the new formatted response structure from C# backend
+                    else if (searchType === 'agentic' && response.result) {
+                        console.log('🎯 Processing formatted agentic response from C# backend');
+                        console.log('Full response object:', JSON.stringify(response, null, 2));
+                        console.log('Response.result type:', typeof response.result);
+                        console.log('Response.result content preview:', response.result.toString().substring(0, 500));
+                        
+                        const formattedResult = response.result;
+                        
+                        // FORCE CHECK: If result looks like JSON array, parse it regardless of type
+                        const resultString = formattedResult.toString().trim();
+                        if (resultString.startsWith('[') && resultString.includes('"ref_id"')) {
+                            console.log('🔥 FORCE PARSING: Detected JSON array format, forcing parse...');
+                            try {
+                                const jsonData = JSON.parse(resultString);
+                                if (Array.isArray(jsonData) && jsonData.length > 0) {
+                                    console.log('✅ FORCE PARSED successfully! Array with', jsonData.length, 'items');
+                                    actualResult = formatProductResults(jsonData);
+                                } else {
+                                    console.log('❌ Force parse failed - not an array or empty');
+                                    actualResult = 'Failed to parse product data';
+                                }
+                            } catch (e) {
+                                console.error('❌ Force parse JSON failed:', e);
+                                actualResult = '<div class="alert alert-danger">Failed to parse product data: ' + e.message + '</div>';
+                            }
+                        }
+                        // Check if this is already the new formatted structure
+                        else if (formattedResult && typeof formattedResult === 'object' && formattedResult.IsProductList !== undefined) {
+                            console.log('✅ Detected new formatted structure from C# backend');
+                            console.log('🔍 Checking for SubQueries:', formattedResult.SubQueries);
+                            console.log('🔍 SubQueries type:', typeof formattedResult.SubQueries);
+                            console.log('🔍 SubQueries length:', formattedResult.SubQueries ? formattedResult.SubQueries.length : 'undefined');
+                            console.log('🔍 QueryPlanningTokens:', formattedResult.QueryPlanningTokens);
+                            
+                            // Generate query breakdown HTML if SubQueries are available
+                            if (formattedResult.SubQueries && Array.isArray(formattedResult.SubQueries) && formattedResult.SubQueries.length > 0) {
+                                console.log('🎯 Generating query breakdown with', formattedResult.SubQueries.length, 'sub-queries');
+                                queryBreakdownHtml = generateQueryBreakdownHtml(formattedResult.SubQueries, formattedResult.QueryPlanningTokens);
+                                console.log('✅ Query breakdown HTML generated, length:', queryBreakdownHtml.length);
+                            } else {
+                                console.log('❌ No SubQueries found or SubQueries is empty/invalid');
+                            }
+                            
+                            if (formattedResult.IsProductList && formattedResult.Products && formattedResult.Products.length > 0) {
+                                console.log('📦 Displaying formatted product list:', formattedResult.Products.length, 'products');
+                                console.log('First product sample:', formattedResult.Products[0]);
+                                actualResult = formatBackendProducts(formattedResult.Products);
+                                
+                                activityInfo = formattedResult.ActivityInfo ? 
+                                    '<div class="mt-3 p-3 bg-light rounded-3">' +
+                                    '<h6><i class="fas fa-chart-line me-2"></i>Search Results</h6>' +
+                                    '<small class="text-muted">' + formattedResult.ActivityInfo + '</small>' +
+                                    '</div>' : '';
+                                    
+                                referencesInfo = formattedResult.ReferencesInfo ? 
+                                    '<div class="mt-3 p-3 bg-info bg-opacity-10 rounded-3">' +
+                                    '<h6><i class="fas fa-link me-2"></i>Knowledge Sources</h6>' +
+                                    '<small class="text-muted">' + formattedResult.ReferencesInfo + '</small>' +
+                                    '</div>' : '';
+                            } else if (formattedResult.FormattedText) {
+                                console.log('📝 Checking FormattedText for JSON array...');
+                                const formattedTextStr = formattedResult.FormattedText.toString().trim();
+                                
+                                // Check if FormattedText contains a JSON array with product data
+                                if (formattedTextStr.startsWith('[') && formattedTextStr.includes('"ref_id"')) {
+                                    console.log('🔥 FORMATTED TEXT CONTAINS JSON ARRAY - Force parsing...');
+                                    try {
+                                        const jsonData = JSON.parse(formattedTextStr);
+                                        if (Array.isArray(jsonData) && jsonData.length > 0) {
+                                            console.log('✅ Successfully parsed FormattedText JSON! Products:', jsonData.length);
+                                            actualResult = formatProductResults(jsonData);
+                                        } else {
+                                            console.log('❌ Parsed but not a valid product array');
+                                            actualResult = formattedResult.FormattedText;
+                                        }
+                                    } catch (e) {
+                                        console.error('❌ Failed to parse FormattedText JSON:', e);
+                                        actualResult = formattedResult.FormattedText;
+                                    }
+                                } else {
+                                    console.log('📝 FormattedText is not JSON, displaying as text');
+                                    actualResult = formattedResult.FormattedText;
+                                }
+                                
+                                activityInfo = formattedResult.ActivityInfo ? 
+                                    '<div class="mt-3 p-3 bg-light rounded-3">' +
+                                    '<h6><i class="fas fa-chart-line me-2"></i>Query Processing</h6>' +
+                                    '<small class="text-muted">' + formattedResult.ActivityInfo + '</small>' +
+                                    '</div>' : '';
+                            } else {
+                                console.log('⚠️ New structure detected but no formatted content found');
+                                actualResult = formattedResult.RawResponse || 'No response content available';
+                            }
+                        } else if (typeof formattedResult === 'string') {
+                            console.log('⚠️ Response.result is a string (old format or raw JSON)');
+                            console.log('String content preview:', formattedResult.substring(0, 200));
+                            
+                            // Try to parse as JSON in case it's raw response
+                            try {
+                                const jsonData = JSON.parse(formattedResult);
+                                if (Array.isArray(jsonData)) {
+                                    console.log('🔧 Parsing raw JSON array with', jsonData.length, 'items');
+                                    console.log('First item sample:', jsonData[0]);
+                                    actualResult = formatProductResults(jsonData);
+                                } else {
+                                    console.log('📝 Using string content as-is');
+                                    actualResult = formattedResult;
+                                }
+                            } catch (e) {
+                                console.log('📝 String is not JSON, using as-is');
+                                // Check if it looks like JSON but failed to parse
+                                if (formattedResult.trim().startsWith('[') && formattedResult.trim().endsWith(']')) {
+                                    console.log('🚨 Looks like malformed JSON, attempting to display as raw product data');
+                                    actualResult = '<div class="alert alert-warning"><strong>Raw Product Data:</strong><br><pre>' + formattedResult.substring(0, 1000) + '...</pre></div>';
+                                } else {
+                                    actualResult = formattedResult;
+                                }
+                            }
+                        } else if (Array.isArray(formattedResult)) {
+                            console.log('🔧 Response.result is a direct array (fallback path)');
+                            console.log('Array contains', formattedResult.length, 'items');
+                            // This is the raw JSON array being returned directly
+                            actualResult = formatProductResults(formattedResult);
+                        } else {
+                            console.log('⚠️ Unexpected response.result format:', typeof formattedResult);
+                            console.log('FormattedResult value:', formattedResult);
+                            actualResult = 'Unexpected response format received';
+                        }
+                    } else {
+                        // Handle RAG search response (existing logic)
+                        actualResult = response.result;
+                    }
+                    
+                    console.log('🎯 About to display results. actualResult length:', actualResult ? actualResult.length : 0);
+                    console.log('🎯 actualResult preview:', actualResult ? actualResult.substring(0, 300) : 'EMPTY');
+                    
+                    // Format the result
+                    resultContent = '<div class="card border-0 rounded-4 shadow-sm">' +
+                        '<div class="card-body p-4">' +
+                        '<div class="d-flex align-items-center mb-3">' +
+                        '<div class="bg-primary rounded-circle p-2 me-3">' +
+                        '<i class="fas ' + searchTypeIcon + ' text-white"></i>' +
+                        '</div>' +
+                        '<div>' +
+                        '<h5 class="mb-0">AI Assistant</h5>' +
+                        '<small class="text-muted">' + searchTypeLabel + '</small>' +
+                        '</div>' +
+                        '</div>' +
+                        queryBreakdownHtml +  // Add query breakdown here
+                        '<div class="search-result-content">' +
+                        (typeof actualResult === 'string' && !actualResult.includes('<br>') && !actualResult.includes('<div') ? actualResult.replace(/\n/g, '<br>') : actualResult) +
+                        '</div>' +
+                        activityInfo +
+                        referencesInfo +
+                        '<div class="mt-4">' +
+                        '<small class="text-muted">' +
+                        '<i class="fas fa-cog me-1"></i>' +
+                        'Powered by Azure Cognitive Search & OpenAI GPT-4.1' +
+                        '</small>' +
+                        '</div>' +
+                        '</div>' +
+                        '</div>';
+                } else {
+                    console.log('❌ Failed success condition check');
+                    console.log('❌ response.success:', response.success);
+                    console.log('❌ response.result:', response.result);
+                    console.log('❌ response.error:', response.error);
+                    // Error case
+                    resultContent = '<div class="alert alert-warning border-0 rounded-4">' +
+                        '<i class="fas fa-exclamation-triangle me-2"></i>' +
+                        '<strong>No Results:</strong> ' + (response.error || 'No results found for your query.') +
+                        '</div>';
+                }
+
+                const queryElement = document.getElementById('searchQuery');
+                const queryValue = queryElement ? queryElement.value : '';
+                
+                const resultsHtml = '<div class="search-results">' +
+                    '<div class="d-flex justify-content-between align-items-center mb-4">' +
+                    '<h4 class="mb-0">' +
+                    '<i class="fas fa-search me-2"></i>' +
+                    searchTypeLabel + ' Results' +
+                    '</h4>' +
+                    '<span class="badge bg-primary rounded-pill">' +
+                    '<i class="fas fa-clock me-1"></i>' +
+                    'Just now' +
+                    '</span>' +
+                    '</div>' +
+                    '<div class="alert alert-info border-0 rounded-4 mb-4">' +
+                    '<i class="fas fa-quote-left me-2"></i>' +
+                    '<strong>Query:</strong> "' + queryValue + '"' +
+                    '</div>' +
+                    resultContent +
+                    '</div>';
+                
+                const resultsElement = document.getElementById('searchResults');
+                if (resultsElement) {
+                    console.log('🎯 Setting resultsElement.innerHTML with length:', resultsHtml.length);
+                    console.log('🎯 First 500 chars of resultsHtml:', resultsHtml.substring(0, 500));
+                    resultsElement.innerHTML = resultsHtml;
+                    resultsElement.style.display = 'none';
+                    
+                    // Fade in animation
+                    setTimeout(() => {
+                        resultsElement.style.display = 'block';
+                        resultsElement.style.opacity = '0';
+                        resultsElement.style.transition = 'opacity 0.5s ease-in-out';
+                        
+                        setTimeout(() => {
+                            resultsElement.style.opacity = '1';
+                        }, 10);
+                    }, 100);
+                    
+                    // Smooth scroll to results
+                    setTimeout(() => {
+                        resultsElement.scrollIntoView({ 
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }, 200);
+                }
+            }
+            
+            function formatDataverseResults(results) {
+                console.log('🔍 Formatting Dataverse search results:', results);
+                
+                // Check if results is the queryResult structure
+                if (results && results.queryResult && results.queryResult.result) {
+                    console.log('📦 Found queryResult structure, extracting products...');
+                    const products = results.queryResult.result;
+                    const summary = results.queryResult.summary || '';
+                    
+                    let html = '<div class="dataverse-results-container">';
+                    html += '<div class="results-header mb-4">';
+                    html += '<h5><i class="fas fa-database me-2"></i>Dataverse Search Results</h5>';
+                    html += '<span class="badge bg-info">' + products.length + ' products found</span>';
+                    html += '</div>';
+                    
+                    // Add summary if available
+                    if (summary) {
+                        html += '<div class="alert alert-info border-0 rounded-4 mb-4 dataverse-summary">';
+                        html += '<h6><i class="fas fa-info-circle me-2"></i>Search Summary</h6>';
+                        html += '<p class="mb-0">' + escapeHtml(summary) + '</p>';
+                        html += '</div>';
+                    }
+                    
+                    // Add products container
+                    html += '<div class="dataverse-products-grid">';
+                    
+                    // Format each product
+                    products.forEach((product, index) => {
+                        html += formatDataverseProduct(product, index);
+                    });
+                    
+                    html += '</div>'; // Close products grid
+                    html += '</div>'; // Close results container
+                    return html;
+                }
+                
+                // Fallback for simple array structure
+                if (Array.isArray(results)) {
+                    let html = '<div class="dataverse-results-container">';
+                    html += '<div class="results-header mb-4">';
+                    html += '<h5><i class="fas fa-database me-2"></i>Dataverse Search Results</h5>';
+                    html += '<span class="badge bg-info">' + results.length + ' results found</span>';
+                    html += '</div>';
+                    
+                    results.forEach((result, index) => {
+                        html += '<div class="dataverse-result-card mb-3">';
+                        html += '<div class="card shadow-sm">';
+                        html += '<div class="card-body">';
+                        
+                        // Title
+                        if (result.Title) {
+                            html += '<h6 class="card-title">' + escapeHtml(result.Title) + '</h6>';
+                        }
+                        
+                        // Content
+                        if (result.Content) {
+                            html += '<p class="card-text">' + escapeHtml(result.Content) + '</p>';
+                        }
+                        
+                        // Score and ID
+                        html += '<div class="d-flex justify-content-between align-items-center mt-3">';
+                        if (result.Score !== undefined) {
+                            html += '<span class="badge bg-success">Score: ' + result.Score.toFixed(2) + '</span>';
+                        }
+                        if (result.Id) {
+                            html += '<small class="text-muted">ID: ' + escapeHtml(result.Id) + '</small>';
+                        }
+                        html += '</div>';
+                        
+                        html += '</div></div></div>';
+                    });
+                    
+                    html += '</div>';
+                    return html;
+                }
+                
+                return '<div class="alert alert-warning">No results found or invalid data format</div>';
+            }
+            
+            function formatDataverseProduct(product, index) {
+                console.log('🛍️ Formatting Dataverse product:', product.new_productname || product.productname || 'Unknown');
+                console.log('Product data structure:', product);
+                
+                // Handle both API response formats
+                const name = product.new_productname || product.productname || 'Unknown Product';
+                const price = product.new_price || product.price || 0;
+                const formattedPrice = product['new_price@OData.Community.Display.V1.FormattedValue'] || 
+                                     product.price || 
+                                     (price > 0 ? `$${price.toFixed(2)}` : 'Price unavailable');
+                const productNumber = product.new_productnumber || product.productnumber || '';
+                const description = product.new_productdescription || product.description || '';
+                const colors = product.new_colors || product.colors || '';
+                const owner = product.owneridname || product.owner || '';
+                const createdOn = product['createdon@OData.Community.Display.V1.FormattedValue'] || 
+                                product.created_on || '';
+                const modifiedOn = product['modifiedon@OData.Community.Display.V1.FormattedValue'] || 
+                                 product.modified_on || '';
+                const totalRatings = product.new_totalratings || product.totalratings || 0;
+                const currency = product.transactioncurrencyidname || product.currency || 'USD';
+                const status = product.status || 'Active';
+                
+                // Try to get record links from various possible properties
+                let recordLinkUrl = '';
+                const recordLinksProperty = '@@recordLinks'.replace('@@', String.fromCharCode(64));
+                if (product[recordLinksProperty] && product[recordLinksProperty].length > 0) {
+                    recordLinkUrl = product[recordLinksProperty][0];
+                } else if (product.recordLinks && product.recordLinks.length > 0) {
+                    recordLinkUrl = product.recordLinks[0];
+                }
+                
+                let html = `
+                    <div class="dataverse-product-card mb-4">
+                        <div class="card shadow-sm border-0 rounded-4">
+                            <div class="card-body p-4">
+                                <!-- Product Header -->
+                                <div class="product-header mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 class="card-title mb-0 text-primary fw-bold">
+                                            <i class="fas fa-box-open me-2"></i>${escapeHtml(name)}
+                                        </h5>
+                                        <span class="badge bg-success fs-5 px-3 py-2">${escapeHtml(formattedPrice)}</span>
+                                    </div>
+                                    
+                                    ${productNumber ? `
+                                    <div class="product-number mb-2">
+                                        <i class="fas fa-barcode me-2 text-secondary"></i>
+                                        <span class="text-muted">Product #: </span>
+                                        <span class="fw-bold">${escapeHtml(productNumber)}</span>
+                                    </div>
+                                    ` : ''}
+                                </div>
+
+                                <!-- Product Description -->
+                                ${description ? `
+                                <div class="product-description mb-4">
+                                    <h6 class="text-secondary mb-2">
+                                        <i class="fas fa-align-left me-2"></i>Description
+                                    </h6>
+                                    <p class="text-dark lh-base">${escapeHtml(description)}</p>
+                                </div>
+                                ` : ''}
+                                
+                                <!-- Product Details -->
+                                <div class="product-details mb-4">
+                                    <h6 class="text-secondary mb-3">
+                                        <i class="fas fa-info-circle me-2"></i>Product Details
+                                    </h6>
+                                    <div class="row">
+                                        ${colors ? `
+                                        <div class="col-md-6 mb-3">
+                                            <div class="detail-item">
+                                                <i class="fas fa-palette me-2 text-info"></i>
+                                                <strong>Material/Color:</strong>
+                                                <br>
+                                                <span class="ms-4">${escapeHtml(colors)}</span>
+                                            </div>
+                                        </div>
+                                        ` : ''}
+                                        
+                                        ${status ? `
+                                        <div class="col-md-6 mb-3">
+                                            <div class="detail-item">
+                                                <i class="fas fa-toggle-on me-2 text-success"></i>
+                                                <strong>Status:</strong>
+                                                <br>
+                                                <span class="ms-4 badge bg-success">${escapeHtml(status)}</span>
+                                            </div>
+                                        </div>
+                                        ` : ''}
+                                        
+                                        ${totalRatings >= 0 ? `
+                                        <div class="col-md-6 mb-3">
+                                            <div class="detail-item">
+                                                <i class="fas fa-star me-2 text-warning"></i>
+                                                <strong>Customer Reviews:</strong>
+                                                <br>
+                                                <span class="ms-4">${totalRatings} ${totalRatings === 1 ? 'review' : 'reviews'}</span>
+                                            </div>
+                                        </div>
+                                        ` : ''}
+                                        
+                                        ${currency && currency !== 'USD' ? `
+                                        <div class="col-md-6 mb-3">
+                                            <div class="detail-item">
+                                                <i class="fas fa-coins me-2 text-success"></i>
+                                                <strong>Currency:</strong>
+                                                <br>
+                                                <span class="ms-4">${escapeHtml(currency)}</span>
+                                            </div>
+                                        </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                                
+                                <!-- Timestamps -->
+                                ${(createdOn || modifiedOn) ? `
+                                <div class="product-timestamps mb-3">
+                                    <h6 class="text-secondary mb-3">
+                                        <i class="fas fa-clock me-2"></i>Timeline
+                                    </h6>
+                                    <div class="row text-sm">
+                                        ${createdOn ? `
+                                        <div class="col-md-6 mb-2">
+                                            <div class="detail-item">
+                                                <i class="fas fa-calendar-plus me-2 text-primary"></i>
+                                                <strong>Created:</strong>
+                                                <br>
+                                                <small class="ms-4 text-muted">${escapeHtml(createdOn)}</small>
+                                            </div>
+                                        </div>
+                                        ` : ''}
+                                        
+                                        ${modifiedOn ? `
+                                        <div class="col-md-6 mb-2">
+                                            <div class="detail-item">
+                                                <i class="fas fa-calendar-edit me-2 text-info"></i>
+                                                <strong>Modified:</strong>
+                                                <br>
+                                                <small class="ms-4 text-muted">${escapeHtml(modifiedOn)}</small>
+                                            </div>
+                                        </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                                ` : ''}
+                                
+                                <!-- Actions -->
+                                ${recordLinkUrl ? `
+                                <div class="product-actions pt-3 border-top">
+                                    <a href="${escapeHtml(recordLinkUrl)}" target="_blank" class="btn btn-outline-primary">
+                                        <i class="fas fa-external-link-alt me-2"></i>
+                                        View Full Details in Dataverse
+                                    </a>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                        </div>
+                    </div>
+                `;
+                
+                return html;
+            }
+            
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+            
+            function formatBackendProducts(products) {
+                console.log('🏭 Formatting pre-parsed products from C# backend:', products.length);
+                
+                let html = '<div class="product-results-container">';
+                
+                products.forEach((product, index) => {
+                    try {
+                        console.log('Processing backend product:', product.Name || 'Unknown');
+                        
+                        // Use the pre-parsed data from C# backend
+                        const name = product.Name || 'Unknown Product';
+                        const price = product.Price || 0;
+                        const productNumber = product.ProductNumber || '';
+                        const description = product.Description || '';
+                        const colorInfo = product.Color || '';
+                        const sizeInfo = product.Size || '';
+                        const materialInfo = product.Material || '';
+                        const productImages = product.ImageUrls || [];
+                        
+                        // Format price
+                        const formattedPrice = price > 0 ? `$${price.toFixed(2)}` : 'Price unavailable';
+                        
+                        // Create product card with improved layout
+                        html += `
+                            <div class="product-card mb-4">
+                                <div class="row g-0">
+                                    <div class="col-md-3">
+                                        <div class="product-image-container">
+                                            ${productImages.length > 0 ? 
+                                                `<img src="/images/${productImages[0]}" alt="${name}" class="product-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                                <div class="product-placeholder" style="display: none;">
+                                                    <i class="fas fa-image"></i>
+                                                    <span>Image Not Found</span>
+                                                </div>` :
+                                                `<div class="product-placeholder">
+                                                    <i class="fas fa-box"></i>
+                                                    <span>Product</span>
+                                                </div>`
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <div class="product-details">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h5 class="product-title mb-0">${name}</h5>
+                                                <span class="product-price">${formattedPrice}</span>
+                                            </div>
+                                            
+                                            ${productNumber ? `<p class="product-number mb-2"><strong>SKU:</strong> ${productNumber}</p>` : ''}
+                                            
+                                            <p class="product-description">${description}</p>
+                                            
+                                            <div class="product-attributes">
+                                                ${colorInfo ? `<span class="attribute-badge color-badge"><i class="fas fa-palette me-1"></i>${colorInfo}</span>` : ''}
+                                                ${sizeInfo ? `<span class="attribute-badge size-badge"><i class="fas fa-expand-arrows-alt me-1"></i>Sizes: ${sizeInfo}</span>` : ''}
+                                                ${materialInfo ? `<span class="attribute-badge material-badge"><i class="fas fa-layer-group me-1"></i>${materialInfo}</span>` : ''}
+                                            </div>
+                                            
+                                            <div class="mt-3 d-flex justify-content-between align-items-center">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-star me-1"></i>
+                                                    Relevance: ${((products.length - index) / products.length * 100).toFixed(0)}%
+                                                </small>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-tag me-1"></i>
+                                                    Result #${index + 1}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                    } catch (error) {
+                        console.error('Error formatting backend product:', error, product);
+                        // Fallback for problematic products
+                        html += `
+                            <div class="product-card mb-4 border-warning">
+                                <div class="card-body">
+                                    <h6 class="text-warning"><i class="fas fa-exclamation-triangle me-2"></i>Product Data Error</h6>
+                                    <p class="text-muted">Unable to display product: ${product.Name || 'Unknown'}</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                html += '</div>';
+                console.log('✅ Backend product formatting completed, HTML length:', html.length);
+                return html;
+            }
+            
+            function formatProductResults(products) {
+                let html = '<div class="product-results-container">';
+                
+                products.forEach((product, index) => {
+                    try {
+                        // Parse the product content string to extract structured data
+                        const content = product.content;
+                        console.log('Processing product content:', content.substring(0, 100) + '...');
+                        
+                        // Extract basic product info using more robust regex
+                        const nameMatch = content.match(/Name:\s*([^;]+)/);
+                        const priceMatch = content.match(/Price:\s*([0-9.]+)/);
+                        const productNumberMatch = content.match(/ProductNumber:\s*([^;]+)/);
+                        const descriptionMatch = content.match(/Description:\s*([^;]+)/);
+                        
+                        const name = nameMatch ? nameMatch[1].trim() : 'Unknown Product';
+                        const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
+                        const productNumber = productNumberMatch ? productNumberMatch[1].trim() : '';
+                        const description = descriptionMatch ? descriptionMatch[1].trim() : '';
+                        
+                        console.log('Extracted:', { name, price, productNumber, description: description.substring(0, 50) + '...' });
+                        
+                        // Extract attributes with improved regex patterns
+                        let colorInfo = '';
+                        let sizeInfo = '';
+                        let materialInfo = '';
+                        let productImages = [];
+                        
+                        // Extract color - look for Color attribute
+                        const colorMatches = content.match(/'Name':\s*'Color'.*?'TextValue':\s*'([^']+)'/g);
+                        if (colorMatches && colorMatches.length > 0) {
+                            const colorMatch = colorMatches[0].match(/'TextValue':\s*'([^']+)'/);
+                            if (colorMatch) colorInfo = colorMatch[1];
+                        }
+                        
+                        // Extract size - look for Size attribute
+                        const sizeMatches = content.match(/'Name':\s*'Size'.*?'TextValue':\s*'([^']+)'/g);
+                        if (sizeMatches && sizeMatches.length > 0) {
+                            const sizeMatch = sizeMatches[0].match(/'TextValue':\s*'([^']+)'/);
+                            if (sizeMatch) sizeInfo = sizeMatch[1].replace(/\|/g, ', ');
+                        }
+                        
+                        // Extract material - look for various material attributes
+                        const materialMatches = content.match(/'Name':\s*'AW\s*(Material|Fabric)'.*?'TextValue':\s*'([^']+)'/g);
+                        if (materialMatches && materialMatches.length > 0) {
+                            const materialMatch = materialMatches[0].match(/'TextValue':\s*'([^']+)'/);
+                            if (materialMatch) materialInfo = materialMatch[1];
+                        }
+                        
+                        // Extract product images with better pattern
+                        const imageMatches = content.match(/'ProductImageUrls':\s*\[[^\]]*'([^']*\.png)'[^\]]*\]/g);
+                        if (imageMatches) {
+                            imageMatches.forEach(match => {
+                                const urlMatch = match.match(/'([^']*\.png)'/);
+                                if (urlMatch && !productImages.includes(urlMatch[1])) {
+                                    productImages.push(urlMatch[1]);
+                                }
+                            });
+                        }
+                        
+                        console.log('Extracted attributes:', { colorInfo, sizeInfo, materialInfo, imageCount: productImages.length });
+                        
+                        // Format price
+                        const formattedPrice = price > 0 ? `$${price.toFixed(2)}` : 'Price unavailable';
+                        
+                        // Create product card with improved layout
+                        html += `
+                            <div class="product-card mb-4">
+                                <div class="row g-0">
+                                    <div class="col-md-3">
+                                        <div class="product-image-container">
+                                            ${productImages.length > 0 ? 
+                                                `<img src="/images/${productImages[0]}" alt="${name}" class="product-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                                <div class="product-placeholder" style="display: none;">
+                                                    <i class="fas fa-image"></i>
+                                                    <span>Image Not Found</span>
+                                                </div>` :
+                                                `<div class="product-placeholder">
+                                                    <i class="fas fa-box"></i>
+                                                    <span>Product</span>
+                                                </div>`
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <div class="product-details">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h5 class="product-title mb-0">${name}</h5>
+                                                <span class="product-price">${formattedPrice}</span>
+                                            </div>
+                                            
+                                            ${productNumber ? `<p class="product-number mb-2"><strong>SKU:</strong> ${productNumber}</p>` : ''}
+                                            
+                                            <p class="product-description">${description}</p>
+                                            
+                                            <div class="product-attributes">
+                                                ${colorInfo ? `<span class="attribute-badge color-badge"><i class="fas fa-palette me-1"></i>${colorInfo}</span>` : ''}
+                                                ${sizeInfo ? `<span class="attribute-badge size-badge"><i class="fas fa-expand-arrows-alt me-1"></i>Sizes: ${sizeInfo}</span>` : ''}
+                                                ${materialInfo ? `<span class="attribute-badge material-badge"><i class="fas fa-layer-group me-1"></i>${materialInfo}</span>` : ''}
+                                            </div>
+                                            
+                                            <div class="mt-3 d-flex justify-content-between align-items-center">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-star me-1"></i>
+                                                    Relevance: ${((products.length - index) / products.length * 100).toFixed(0)}%
+                                                </small>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-tag me-1"></i>
+                                                    Result #${index + 1}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                    } catch (error) {
+                        console.error('Error formatting product:', error, product);
+                        // Enhanced fallback for problematic products
+                        const safeContent = product.content ? product.content.substring(0, 300) : 'No content available';
+                        html += `
+                            <div class="product-card mb-4 border-warning">
+                                <div class="card-body">
+                                    <h6 class="text-warning"><i class="fas fa-exclamation-triangle me-2"></i>Product Data (Raw)</h6>
+                                    <small class="text-muted">Error parsing structured data, showing raw content:</small>
+                                    <pre class="small text-muted mt-2" style="max-height: 150px; overflow-y: auto;">${safeContent}...</pre>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                html += '</div>';
+                console.log('Generated product HTML length:', html.length);
+                return html;
+            }
+            
+            function showToast(message, type) {
+                const toastHtml = `
+                    <div class="toast-notification toast-${type}">
+                        <i class="fas fa-${type === 'success' ? 'check' : type === 'warning' ? 'exclamation' : 'times'} me-2"></i>
+                        ${message}
+                    </div>
+                `;
+                
+                document.body.insertAdjacentHTML('beforeend', toastHtml);
+                
+                const toasts = document.querySelectorAll('.toast-notification');
+                const toast = toasts[toasts.length - 1];
+                
+                // Fade in
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease-in-out';
+                setTimeout(() => {
+                    toast.style.opacity = '1';
+                }, 10);
+                
+                // Fade out after 3 seconds
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    setTimeout(() => {
+                        if (toast.parentNode) {
+                            toast.parentNode.removeChild(toast);
+                        }
+                    }, 300);
+                }, 3000);
+            }
+            
+            function generateQueryBreakdownHtml(subQueries, planningTokens) {
+                console.log('🧠 Generating query breakdown HTML with', subQueries.length, 'sub-queries');
+                
+                if (!subQueries || subQueries.length === 0) {
+                    return '';
+                }
+                
+                const uniqueId = 'query-breakdown-' + Date.now();
+                
+                let subQueriesHtml = '';
+                subQueries.forEach((subQuery, index) => {
+                    const timing = subQuery.ElapsedMs ? `${subQuery.ElapsedMs}ms` : 'N/A';
+                    const resultCount = subQuery.ResultCount || 0;
+                    const statusIcon = resultCount > 0 ? 'fa-check-circle text-success' : 'fa-search text-muted';
+                    
+                    subQueriesHtml += `
+                        <div class="sub-query-item mb-2">
+                            <div class="d-flex align-items-start">
+                                <div class="sub-query-number me-3">
+                                    <span class="badge bg-secondary rounded-pill">${index + 1}</span>
+                                </div>
+                                <div class="sub-query-content flex-grow-1">
+                                    <div class="sub-query-text">
+                                        <i class="fas ${statusIcon} me-2"></i>
+                                        <strong>"${subQuery.Query}"</strong>
+                                    </div>
+                                    <div class="sub-query-meta mt-1">
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>Time: ${timing}
+                                            <span class="mx-2">•</span>
+                                            <i class="fas fa-list-ol me-1"></i>Results: ${resultCount}
+                                            ${subQuery.Filter ? `<span class="mx-2">•</span><i class="fas fa-filter me-1"></i>Filtered` : ''}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                const planningInfo = planningTokens ? 
+                    `<div class="text-muted small mt-2">
+                        <i class="fas fa-microchip me-1"></i>
+                        Query Planning Tokens: ${planningTokens}
+                    </div>` : '';
+                
+                return `
+                    <div class="query-breakdown-container mb-4">
+                        <div class="query-breakdown-header" style="cursor: pointer;" onclick="toggleQueryBreakdown('${uniqueId}')">
+                            <div class="d-flex align-items-center justify-content-between p-3 bg-gradient-primary rounded-3 text-white">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-brain me-2"></i>
+                                    <span class="fw-semibold">AI Query Analysis</span>
+                                    <span class="badge bg-white text-primary ms-2">${subQueries.length} sub-queries</span>
+                                </div>
+                                <i id="${uniqueId}-icon" class="fas fa-chevron-down transition-transform"></i>
+                            </div>
+                        </div>
+                        <div id="${uniqueId}" class="query-breakdown-content" style="display: none;">
+                            <div class="p-3 bg-light rounded-bottom">
+                                <div class="alert alert-info border-0 mb-3">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <small>The AI analyzed your query and broke it down into focused sub-queries for better search results:</small>
+                                </div>
+                                ${subQueriesHtml}
+                                ${planningInfo}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+
+        // Global function for toggle query breakdown - moved outside DOMContentLoaded for onclick access
+        window.toggleQueryBreakdown = function(elementId) {
+            const content = document.getElementById(elementId);
+            const icon = document.getElementById(elementId + '-icon');
+            
+            if (content && icon) {
+                if (content.style.display === 'none') {
+                    content.style.display = 'block';
+                    icon.classList.remove('fa-chevron-down');
+                    icon.classList.add('fa-chevron-up');
+                    
+                    // Smooth animation
+                    content.style.opacity = '0';
+                    content.style.transform = 'translateY(-10px)';
+                    content.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    
+                    setTimeout(() => {
+                        content.style.opacity = '1';
+                        content.style.transform = 'translateY(0)';
+                    }, 10);
+                } else {
+                    content.style.opacity = '0';
+                    content.style.transform = 'translateY(-10px)';
+                    
+                    setTimeout(() => {
+                        content.style.display = 'none';
+                        icon.classList.remove('fa-chevron-up');
+                        icon.classList.add('fa-chevron-down');
+                    }, 300);
+                }
+            }
+        };
+    </script>
+    
+    <style>
+        .searching {
+            opacity: 0.7;
+            transform: scale(0.98);
+        }
+        
+        .example-query.clicked {
+            transform: translateY(-2px) scale(0.98);
+            box-shadow: var(--shadow-heavy);
+        }
+        
+        .toast-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            color: white;
+            font-weight: 500;
+            z-index: 9999;
+            box-shadow: var(--shadow-medium);
+            display: none;
+        }
+        
+        .toast-success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+        }
+        
+        .toast-warning {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+        }
+        
+        .toast-error {
+            background: linear-gradient(135deg, #dc3545, #e83e8c);
+        }
+
+        .search-result-content {
+            line-height: 1.6;
+            font-size: 1rem;
+            color: #333;
+        }
+
+        .search-result-content h1, .search-result-content h2, .search-result-content h3 {
+            color: #2563eb;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .search-result-content p {
+            margin-bottom: 1rem;
+        }
+
+        .search-result-content ul, .search-result-content ol {
+            padding-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .search-result-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        .search-result-content strong {
+            color: #1e40af;
+            font-weight: 600;
+        }
+
+        .product-results-container {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        /* Dataverse Product Card Styling */
+        .dataverse-product-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .dataverse-product-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .dataverse-product-card .card {
+            border: 1px solid #e5e7eb;
+        }
+
+        .dataverse-product-card .product-header {
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 1rem;
+        }
+
+        .dataverse-product-card .product-description {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 1rem;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .dataverse-product-card .product-details {
+            background: #ffffff;
+        }
+
+        .dataverse-product-card .detail-item {
+            padding: 0.5rem 0;
+            border-bottom: 1px dashed #e5e7eb;
+        }
+
+        .dataverse-product-card .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .dataverse-product-card .product-timestamps {
+            background: #fafafa;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .dataverse-product-card .product-actions {
+            background: #f8fafc;
+            margin: 0 -1.5rem -1.5rem -1.5rem;
+            padding: 1rem 1.5rem;
+            border-radius: 0 0 1rem 1rem;
+        }
+
+        .dataverse-product-card h6 {
+            color: #374151;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .dataverse-product-card .badge {
+            font-size: 1rem;
+            padding: 0.5rem 1rem;
+        }
+
+        /* Results Header for Dataverse */
+        .dataverse-results-container .results-header {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 1rem 1rem 0 0;
+            margin-bottom: 1.5rem;
+        }
+
+        .dataverse-results-container .results-header h5 {
+            margin: 0;
+            color: white;
+        }
+
+        .dataverse-results-container .results-header .badge {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .product-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .product-card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .product-image-container {
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            position: relative;
+        }
+
+        .product-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .product-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .product-placeholder i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-details {
+            padding: 1.5rem;
+            height: 100%;
+        }
+
+        .product-title {
+            color: #1e293b;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+
+        .product-price {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #059669;
+            white-space: nowrap;
+        }
+
+        .product-number {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .product-description {
+            color: #475569;
+            line-height: 1.5;
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+
+        .product-attributes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .attribute-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .color-badge {
+            background: linear-gradient(135deg, #fef3c7, #fed7aa);
+            color: #92400e;
+        }
+
+        .size-badge {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            color: #1e40af;
+        }
+
+        .material-badge {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            color: #065f46;
+        }
+
+        /* Responsive design for mobile devices */
+        @@media (max-width: 768px) {
+            .product-card .row {
+                flex-direction: column;
+            }
+            
+            .product-image-container {
+                height: 150px;
+            }
+            
+            .product-details {
+                padding: 1rem;
+            }
+            
+            .attribute-badge {
+                font-size: 0.75rem;
+                padding: 0.2rem 0.6rem;
+            }
+        }
+
+        /* Query Breakdown Styles */
+        .query-breakdown-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .query-breakdown-header {
+            transition: all 0.2s ease;
+        }
+
+        .query-breakdown-header:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .query-breakdown-content {
+            border-left: 3px solid #667eea;
+            border-right: 3px solid #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .sub-query-item {
+            border-left: 3px solid transparent;
+            padding-left: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .sub-query-item:hover {
+            border-left-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+            padding-left: 1rem;
+        }
+
+        .sub-query-text {
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .sub-query-meta {
+            font-size: 0.8rem;
+        }
+
+        .sub-query-number .badge {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+        }
+
+        .transition-transform {
+            transition: transform 0.3s ease;
+        }
+
+        /* Animation for expanding content */
+        .query-breakdown-content {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        /* Dataverse Search Button Styles */
+        .btn-dataverse {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border: none;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-dataverse:hover {
+            background: linear-gradient(135deg, #5b21b6, #7c3aed);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+            color: white;
+        }
+
+        /* Search Buttons Layout */
+        .search-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .search-buttons .btn {
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .search-buttons .btn > div {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Token Container Styles */
+        .dataverse-token-container {
+            animation: slideDown 0.3s ease-out;
+        }
+
+        /* Keyframes for animations */
+        @@keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dataverse-token-container .card {
+            border: 1px solid #e0e7ff;
+            box-shadow: 0 2px 10px rgba(139, 92, 246, 0.1);
+        }
+
+        .dataverse-token-container textarea {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.85rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            transition: border-color 0.2s ease;
+        }
+
+        .dataverse-token-container textarea:focus {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+
+        /* Search Results Container */
+        .search-results-container {
+            margin-top: 2rem;
+            position: relative;
+            clear: both;
+            overflow: hidden;
+        }
+
+        /* Dataverse Results Styles */
+        .dataverse-results-container {
+            margin-top: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .dataverse-products-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .dataverse-product-card {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+        }
+
+        .dataverse-product-card .card {
+            border: 1px solid #e5e7eb;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+        }
+
+        .dataverse-product-card .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .dataverse-product-card .product-header {
+            border-bottom: 1px solid #f3f4f6;
+            padding-bottom: 1rem;
+        }
+
+        .dataverse-product-card .detail-item {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f9fafb;
+        }
+
+        .dataverse-product-card .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .dataverse-result-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-bottom: 1rem !important;
+            position: relative;
+            z-index: 2;
+        }
+
+        .dataverse-result-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .dataverse-summary {
+            background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border-left: 4px solid #8b5cf6;
+            margin-bottom: 1.5rem !important;
+            position: relative;
+            z-index: 2;
+        }
+    </style>
+}

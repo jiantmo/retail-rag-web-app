@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dataverse Frontend Debug Test</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { margin: 20px; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #cce7f0; border-color: #b1dfec; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; max-height: 300px; }
+        .product-card { margin: 10px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <h1>🔧 Dataverse Frontend Debug Test</h1>
+        
+        <div class="debug-section info">
+            <h3>📋 Test Plan</h3>
+            <p>This page will test the frontend Dataverse integration by:</p>
+            <ol>
+                <li>Making a direct API call to /search/dataverse</li>
+                <li>Testing the formatDataverseResults function</li>
+                <li>Verifying the display logic</li>
+            </ol>
+        </div>
+
+        <div class="debug-section">
+            <h3>🎯 Test Controls</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <label for="testQuery" class="form-label">Test Query:</label>
+                    <input type="text" id="testQuery" class="form-control" value="gloves" placeholder="Enter search query">
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
+                    <button id="testBtn" class="btn btn-primary me-2">🚀 Test Dataverse Search</button>
+                    <button id="clearBtn" class="btn btn-secondary">🧹 Clear Results</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="debugOutput" class="debug-section">
+            <h3>📊 Debug Output</h3>
+            <div id="debugLogs"></div>
+        </div>
+
+        <div id="searchResults" class="debug-section" style="display:none;">
+            <h3>📦 Search Results</h3>
+            <div id="resultsContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // Debug logging function
+        function debugLog(message, type = 'info') {
+            const debugLogs = document.getElementById('debugLogs');
+            const timestamp = new Date().toLocaleTimeString();
+            const logClass = type === 'error' ? 'text-danger' : type === 'success' ? 'text-success' : 'text-info';
+            
+            debugLogs.innerHTML += `<div class="${logClass}"><strong>[${timestamp}]</strong> ${message}</div>`;
+            debugLogs.scrollTop = debugLogs.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        // Utility functions (copied from main page)
+        function escapeHtml(text) {
+            if (!text) return '';
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
+        function formatDataverseProduct(product) {
+            const productName = escapeHtml(product.new_productname || 'Unknown Product');
+            const price = escapeHtml(product.price || 'N/A');
+            const description = escapeHtml(product.description || 'No description available');
+            const colors = escapeHtml(product.colors || 'N/A');
+            const status = escapeHtml(product.status || 'N/A');
+            const productNumber = escapeHtml(product.productnumber || 'N/A');
+            const totalRatings = product.totalratings || 0;
+            const recordLink = product['@recordLinks'] && product['@recordLinks'].length > 0 ? product['@recordLinks'][0] : '';
+
+            return `
+                <div class="product-card mb-3 p-3 border rounded">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6 class="product-title mb-2">
+                                <i class="fas fa-tag me-2"></i>${productName}
+                                ${recordLink ? `<a href="${recordLink}" target="_blank" class="ms-2"><i class="fas fa-external-link-alt"></i></a>` : ''}
+                            </h6>
+                            <p class="product-description text-muted mb-2">${description}</p>
+                            <div class="product-details">
+                                <small class="text-muted">
+                                    <span class="me-3"><i class="fas fa-palette me-1"></i>Color: ${colors}</span>
+                                    <span class="me-3"><i class="fas fa-info-circle me-1"></i>Status: ${status}</span>
+                                    <span class="me-3"><i class="fas fa-barcode me-1"></i>SKU: ${productNumber}</span>
+                                    <span><i class="fas fa-star me-1"></i>Ratings: ${totalRatings}</span>
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <h5 class="price text-success mb-0">${price}</h5>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatDataverseResults(dataverseResult) {
+            debugLog('🔧 formatDataverseResults called', 'info');
+            debugLog(`🔧 dataverseResult type: ${typeof dataverseResult}`, 'info');
+            
+            if (!dataverseResult || !dataverseResult.queryResult) {
+                debugLog('❌ Missing queryResult in dataverseResult', 'error');
+                return '<div class="alert alert-warning">No Dataverse results structure found.</div>';
+            }
+
+            const queryResult = dataverseResult.queryResult;
+            const products = queryResult.result || [];
+            const summary = queryResult.summary;
+            
+            debugLog(`🔧 Found ${products.length} products`, 'success');
+            debugLog(`🔧 Summary length: ${summary ? summary.length : 0} chars`, 'info');
+
+            let resultsHtml = '<div class="dataverse-results">';
+
+            // Add summary if available
+            if (summary) {
+                resultsHtml += `
+                    <div class="summary-section mb-4">
+                        <h5><i class="fas fa-chart-line me-2"></i>Search Summary</h5>
+                        <div class="alert alert-info border-0 rounded-4">
+                            <p class="mb-0">${escapeHtml(summary)}</p>
+                        </div>
+                    </div>
+                `;
+                debugLog(`✅ Added summary section`, 'success');
+            }
+
+            // Add products if available
+            if (products && products.length > 0) {
+                resultsHtml += `
+                    <div class="products-section">
+                        <h5><i class="fas fa-box me-2"></i>Products Found (${products.length})</h5>
+                        <div class="products-container">
+                `;
+
+                products.forEach((product, index) => {
+                    debugLog(`🏷️ Processing product ${index + 1}: ${product.new_productname}`, 'info');
+                    resultsHtml += formatDataverseProduct(product);
+                });
+
+                resultsHtml += '</div></div>';
+                debugLog(`✅ Added ${products.length} products to HTML`, 'success');
+            } else {
+                resultsHtml += '<div class="alert alert-warning">No products found in the results.</div>';
+                debugLog('⚠️ No products found', 'error');
+            }
+
+            resultsHtml += '</div>';
+            
+            debugLog(`🔧 Generated HTML length: ${resultsHtml.length} characters`, 'success');
+            return resultsHtml;
+        }
+
+        // Test function to call the API
+        function testDataverseSearch() {
+            const query = document.getElementById('testQuery').value.trim();
+            if (!query) {
+                debugLog('❌ Please enter a test query', 'error');
+                return;
+            }
+
+            debugLog(`🚀 Starting Dataverse search test for query: "${query}"`, 'info');
+            
+            const requestBody = {
+                queryText: query,
+                skill: '',
+                options: ['GetResultsSummary'],
+                additionalProperties: { ExecuteUnifiedSearch: true }
+            };
+
+            debugLog(`📤 Request body: ${JSON.stringify(requestBody)}`, 'info');
+
+            fetch('/search/dataverse', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody)
+            })
+            .then(response => {
+                debugLog(`📥 Response status: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(`HTTP ${response.status}: ${text}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                debugLog('✅ Received API response', 'success');
+                debugLog(`📊 Response structure: success=${data.success}, result=${!!data.result}`, 'info');
+                
+                if (data.success && data.result) {
+                    debugLog('🎯 Processing successful response with result', 'success');
+                    
+                    // Test the formatting function
+                    const formattedResult = formatDataverseResults(data.result);
+                    debugLog(`📝 Formatted result length: ${formattedResult.length}`, 'success');
+                    
+                    // Display the results
+                    const resultsDiv = document.getElementById('searchResults');
+                    const resultsContent = document.getElementById('resultsContent');
+                    resultsContent.innerHTML = formattedResult;
+                    resultsDiv.style.display = 'block';
+                    
+                    debugLog('✅ Results displayed successfully!', 'success');
+                } else {
+                    debugLog(`❌ API response indicates failure or no result: ${JSON.stringify(data)}`, 'error');
+                }
+            })
+            .catch(error => {
+                debugLog(`❌ API call failed: ${error.message}`, 'error');
+                console.error('Full error:', error);
+            });
+        }
+
+        // Clear results function
+        function clearResults() {
+            document.getElementById('debugLogs').innerHTML = '';
+            document.getElementById('searchResults').style.display = 'none';
+            document.getElementById('resultsContent').innerHTML = '';
+            debugLog('🧹 Results cleared', 'info');
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            debugLog('🎯 Debug page loaded successfully', 'success');
+            
+            document.getElementById('testBtn').addEventListener('click', testDataverseSearch);
+            document.getElementById('clearBtn').addEventListener('click', clearResults);
+            
+            // Enter key support
+            document.getElementById('testQuery').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    testDataverseSearch();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

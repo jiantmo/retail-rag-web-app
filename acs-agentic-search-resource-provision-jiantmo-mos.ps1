@@ -63,48 +63,6 @@ function Write-ColorOutput {
     Write-Host $Message -ForegroundColor $Color
 }
 
-# 检查并安装必要的PowerShell模块
-function Test-PowerShellModules {
-    Write-ColorOutput "🔧 检查PowerShell模块..." "Cyan"
-    
-    # 检查Az.CognitiveServices模块
-    if (-not (Get-Module -ListAvailable -Name Az.CognitiveServices)) {
-        Write-ColorOutput "📦 正在安装Az.CognitiveServices模块..." "Yellow"
-        try {
-            Install-Module -Name Az.CognitiveServices -Force -AllowClobber -Scope CurrentUser
-            Write-ColorOutput "✅ Az.CognitiveServices模块安装成功" "Green"
-        } catch {
-            Write-ColorOutput "⚠️ Az.CognitiveServices模块安装失败: $($_.Exception.Message)" "Red"
-            Write-ColorOutput "💡 请手动运行: Install-Module -Name Az.CognitiveServices -Force" "Yellow"
-        }
-    } else {
-        Write-ColorOutput "✅ Az.CognitiveServices模块已安装" "Green"
-    }
-    
-    # 检查Az.Accounts模块
-    if (-not (Get-Module -ListAvailable -Name Az.Accounts)) {
-        Write-ColorOutput "📦 正在安装Az.Accounts模块..." "Yellow"
-        try {
-            Install-Module -Name Az.Accounts -Force -AllowClobber -Scope CurrentUser
-            Write-ColorOutput "✅ Az.Accounts模块安装成功" "Green"
-        } catch {
-            Write-ColorOutput "⚠️ Az.Accounts模块安装失败: $($_.Exception.Message)" "Red"
-            Write-ColorOutput "💡 请手动运行: Install-Module -Name Az.Accounts -Force" "Yellow"
-        }
-    } else {
-        Write-ColorOutput "✅ Az.Accounts模块已安装" "Green"
-    }
-    
-    # 导入必要的模块
-    try {
-        Import-Module Az.CognitiveServices -Force
-        Import-Module Az.Accounts -Force
-        Write-ColorOutput "✅ PowerShell模块导入成功" "Green"
-    } catch {
-        Write-ColorOutput "⚠️ PowerShell模块导入失败: $($_.Exception.Message)" "Yellow"
-    }
-}
-
 # Purge已删除的认知服务资源函数
 function Invoke-CognitiveServicesPurge {
     param([string]$ResourceName, [string]$Location, [string]$SubscriptionId, [string]$ResourceGroupName)
@@ -124,9 +82,6 @@ function Invoke-CognitiveServicesPurge {
         Write-ColorOutput "⚠️ Purge操作失败: $($_.Exception.Message)" "Yellow"
     }
 }
-
-# 检查PowerShell模块
-Test-PowerShellModules
 
 Write-ColorOutput "🚀 开始创建Azure AI Search Agentic资源..." "Green"
 Write-ColorOutput "🔧 脚本参数配置:" "Cyan"
@@ -330,94 +285,37 @@ if (-not $aiServicesExists) {
     Write-ColorOutput "ℹ️ AI Services资源已存在，保留现有资源" "Yellow"
 }
 
-# 6. 创建AI Foundry Project (需要符合企业策略要求)
+# 6. 创建AI Foundry Project (可选，如果权限不足可跳过)
 Write-ColorOutput "🤖 尝试创建AI Foundry Project: $AIFoundryProjectName..." "Cyan"
 
-# 首先检查底层的Cognitive Services账户是否存在
-$foundryHubName = "$AIFoundryProjectName-hub"
-$foundryHubExists = az cognitiveservices account show --name $foundryHubName --resource-group $ResourceGroupName 2>$null
-
-if ($foundryHubExists) {
-    Write-ColorOutput "ℹ️ AI Foundry Hub已存在: $foundryHubName" "Yellow"
+# 首先检查Project是否已存在
+$foundryProjectExists = az ml workspace show --name $AIFoundryProjectName --resource-group $ResourceGroupName 2>$null
+if ($foundryProjectExists) {
+    Write-ColorOutput "ℹ️ AI Foundry Project已存在: $AIFoundryProjectName" "Yellow"
 } else {
-    Write-ColorOutput "💡 正在创建AI Foundry Hub (符合企业策略)..." "Yellow"
-    Write-ColorOutput "🔒 注意：将禁用本地身份验证以符合企业安全策略" "Yellow"
+    Write-ColorOutput "💡 正在尝试创建AI Foundry Project..." "Yellow"
+    Write-ColorOutput "⚠️ 如果权限不足，可以稍后通过Azure门户手动创建" "Yellow"
     
-    # 尝试purge可能存在的已删除资源
-    Invoke-CognitiveServicesPurge -ResourceName $foundryHubName -Location $Location -SubscriptionId $SubscriptionId -ResourceGroupName $ResourceGroupName
-    
-    # 使用PowerShell创建Hub，符合企业策略要求
+    # 尝试创建AI Foundry Project，如果失败不影响其他资源创建
     try {
-        Write-ColorOutput "🔧 使用PowerShell创建AI Foundry Hub..." "Yellow"
-        $hubResult = New-AzCognitiveServicesAccount `
-            -ResourceGroupName $ResourceGroupName `
-            -Name $foundryHubName `
-            -Type "AIServices" `
-            -SkuName "S0" `
-            -Location $Location `
-            -DisableLocalAuth $true `
-            -Force
+        $foundryProjectResult = az ml workspace create `
+            --name $AIFoundryProjectName `
+            --resource-group $ResourceGroupName `
+            --location $Location `
+            --description "AI Foundry Project for retail RAG application" 2>$null
 
-        if ($hubResult) {
-            Write-ColorOutput "✅ AI Foundry Hub创建成功" "Green"
-            
-            # 等待Hub完全部署
-            Write-ColorOutput "⏳ 等待AI Foundry Hub完全部署..." "Yellow"
-            Start-Sleep -Seconds 30
-            
-            # 现在尝试创建AI Foundry Project工作区
-            Write-ColorOutput "🤖 创建AI Foundry Project工作区..." "Yellow"
-            $foundryProjectExists = az ml workspace show --name $AIFoundryProjectName --resource-group $ResourceGroupName 2>$null
-            if (-not $foundryProjectExists) {
-                $foundryProjectResult = az ml workspace create `
-                    --name $AIFoundryProjectName `
-                    --resource-group $ResourceGroupName `
-                    --location $Location `
-                    --description "AI Foundry Project for retail RAG application" `
-                    --hub $foundryHubName 2>$null
-
-                if ($LASTEXITCODE -eq 0) {
-                    Write-ColorOutput "✅ AI Foundry Project创建成功" "Green"
-                } else {
-                    Write-ColorOutput "⚠️ AI Foundry Project工作区创建失败" "Yellow"
-                    Write-ColorOutput "💡 建议：通过Azure AI Foundry门户 (https://ai.azure.com) 手动创建项目" "Yellow"
-                }
-            } else {
-                Write-ColorOutput "ℹ️ AI Foundry Project工作区已存在" "Yellow"
-            }
+        if ($LASTEXITCODE -eq 0) {
+            Write-ColorOutput "✅ AI Foundry Project创建成功" "Green"
         } else {
-            Write-ColorOutput "❌ AI Foundry Hub创建失败" "Red"
+            Write-ColorOutput "⚠️ AI Foundry Project创建失败，可能是权限不足" "Yellow"
+            Write-ColorOutput "💡 建议：通过Azure AI Foundry门户 (https://ai.azure.com) 手动创建项目" "Yellow"
+            Write-ColorOutput "📋 项目名称: $AIFoundryProjectName" "White"
+            Write-ColorOutput "📋 资源组: $ResourceGroupName" "White"
+            Write-ColorOutput "📋 位置: $Location" "White"
         }
     } catch {
-        Write-ColorOutput "⚠️ PowerShell创建失败，尝试备用方案..." "Yellow"
-        
-        # 备用方案：使用Azure CLI并显式禁用本地认证
-        try {
-            $hubResult = az cognitiveservices account create `
-                --name $foundryHubName `
-                --resource-group $ResourceGroupName `
-                --location $Location `
-                --kind "AIServices" `
-                --sku "S0" `
-                --subscription $SubscriptionId `
-                --custom-domain $foundryHubName `
-                --disable-local-auth true `
-                --yes 2>$null
-
-            if ($LASTEXITCODE -eq 0) {
-                Write-ColorOutput "✅ AI Foundry Hub创建成功 (使用Azure CLI)" "Green"
-            } else {
-                Write-ColorOutput "❌ AI Foundry Hub创建失败，可能是策略限制" "Red"
-                Write-ColorOutput "💡 手动创建步骤：" "Yellow"
-                Write-ColorOutput "   1. 访问 https://ai.azure.com" "White"
-                Write-ColorOutput "   2. 创建新的Hub，名称: $foundryHubName" "White"
-                Write-ColorOutput "   3. 确保禁用本地身份验证" "White"
-                Write-ColorOutput "   4. 在Hub中创建Project: $AIFoundryProjectName" "White"
-            }
-        } catch {
-            Write-ColorOutput "⚠️ AI Foundry Hub创建遇到错误，继续执行其他步骤" "Yellow"
-            Write-ColorOutput "💡 错误详情: $($_.Exception.Message)" "Red"
-        }
+        Write-ColorOutput "⚠️ AI Foundry Project创建遇到错误，继续执行其他步骤" "Yellow"
+        Write-ColorOutput "💡 错误详情: $($_.Exception.Message)" "Red"
     }
 }
 

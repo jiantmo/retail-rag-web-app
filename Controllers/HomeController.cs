@@ -15,7 +15,8 @@ namespace retail_rag_web_app.Controllers
 
         public IActionResult Index()
         {
-            return View();
+            // Redirect to search controller
+            return Redirect("/search");
         }
 
         public IActionResult KnowledgeAgent()
