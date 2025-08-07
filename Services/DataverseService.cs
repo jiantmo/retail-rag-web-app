@@ -18,13 +18,11 @@ namespace retail_rag_web_app.Services
         private readonly string _auroraOrgUser;
         private readonly string _auroraOrgId;
         private readonly string _dvSearchSkill;
-        private readonly string _clientId;
+        private readonly string? _clientId;
         
         // Token caching fields
-        private static string? _cachedAccessToken;
         private static DateTime _tokenExpiryTime = DateTime.MinValue;
         private static readonly object _tokenLock = new object();
-        private static IPublicClientApplication? _publicClientApp;
 
         public DataverseService(HttpClient httpClient, IConfiguration configuration, ILogger<DataverseService> logger)
         {
@@ -36,7 +34,7 @@ namespace retail_rag_web_app.Services
             _auroraOrgUser = _configuration["AURORA_ORG_USER"] ?? throw new ArgumentException("AURORA_ORG_USER not configured");
             _auroraOrgId = _configuration["AURORA_ORG_ID"] ?? throw new ArgumentException("AURORA_ORG_ID not configured");
             _dvSearchSkill = _configuration["DV_SEARCH_SKILL"] ?? throw new ArgumentException("DV_SEARCH_SKILL not configured");
-            _clientId = _configuration["AZURE_CLIENT_ID"] ?? throw new ArgumentException("AZURE_CLIENT_ID not configured");
+            _clientId = _configuration["AZURE_CLIENT_ID"]; // Optional
         }
 
         public async Task<DataverseSearchResponse> SearchAsync(string queryText, string? bearerToken = null)

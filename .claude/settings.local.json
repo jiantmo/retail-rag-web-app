@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(.test_api_enhanced.ps1)",
+      "Bash(dir:*)",
+      "Bash(powershell:*)",
+      "Bash(where python)",
+      "Bash(mkdir:*)",
+      "Bash(Remove-Item \"run_product_testing.ps1\" -Force)",
+      "Bash(grep:*)",
+      "Bash(check_token.cmd)",
+      "Bash(where python3)",
+      "Bash(cmd /c:*)",
+      "Bash(ls:*)"
+    ],
+    "deny": []
+  }
+}

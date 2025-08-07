@@ -15,15 +15,15 @@ namespace retail_rag_web_app.Services
     {
         private readonly HttpClient _httpClient;
         private readonly string _searchEndpoint;
-        private readonly string _searchApiKey;
+        private readonly string? _searchApiKey;
         private readonly string _agentName;
         private readonly string _indexName;
         private readonly string _openAIEndpoint;
         private readonly string _openAIDeployment;
-        private readonly string _openAIApiKey;
+        private readonly string? _openAIApiKey;
         private readonly ILogger<KnowledgeAgentManagementService> _logger;
         private readonly bool _useRoleBasedAuth;
-        private readonly string _managedIdentityClientId;
+        private readonly string? _managedIdentityClientId;
 
         public KnowledgeAgentManagementService(HttpClient httpClient, IConfiguration configuration, ILogger<KnowledgeAgentManagementService> logger)
         {
@@ -112,7 +112,7 @@ namespace retail_rag_web_app.Services
         /// <summary>
         /// Gets a specific knowledge agent by name
         /// </summary>
-        public async Task<KnowledgeAgent> GetKnowledgeAgentAsync(string agentName = null)
+        public async Task<KnowledgeAgent?> GetKnowledgeAgentAsync(string? agentName = null)
         {
             try
             {
@@ -156,7 +156,7 @@ namespace retail_rag_web_app.Services
         /// <summary>
         /// Creates a new knowledge agent with optimal settings for retail RAG
         /// </summary>
-        public async Task<KnowledgeAgent> CreateKnowledgeAgentAsync(string agentName = null, KnowledgeAgentCreateOptions options = null)
+        public async Task<KnowledgeAgent?> CreateKnowledgeAgentAsync(string? agentName = null, KnowledgeAgentCreateOptions? options = null)
         {
             try
             {
@@ -216,7 +216,7 @@ namespace retail_rag_web_app.Services
         /// <summary>
         /// Deletes a knowledge agent
         /// </summary>
-        public async Task<bool> DeleteKnowledgeAgentAsync(string agentName = null)
+        public async Task<bool> DeleteKnowledgeAgentAsync(string? agentName = null)
         {
             try
             {
@@ -256,7 +256,7 @@ namespace retail_rag_web_app.Services
         /// <summary>
         /// Tests the knowledge agent by sending a sample query
         /// </summary>
-        public async Task<AgenticRetrievalResponse> TestKnowledgeAgentAsync(string query = "What products do you recommend?", string agentName = null, string role = "user", string? assistantContext = null)
+        public async Task<AgenticRetrievalResponse?> TestKnowledgeAgentAsync(string query = "What products do you recommend?", string? agentName = null, string role = "user", string? assistantContext = null)
         {
             try
             {
@@ -380,7 +380,7 @@ I focus on delivering clear, structured product information that helps customers
             }
         }
 
-        private KnowledgeAgentDefinition CreateAgentDefinition(string agentName, KnowledgeAgentCreateOptions options = null)
+        private KnowledgeAgentDefinition CreateAgentDefinition(string agentName, KnowledgeAgentCreateOptions? options = null)
         {
             options ??= new KnowledgeAgentCreateOptions();
 

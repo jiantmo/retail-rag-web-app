@@ -38,7 +38,7 @@ namespace retail_rag_web_app.Controllers
         /// Get a specific knowledge agent
         /// </summary>
         [HttpGet("get/{agentName?}")]
-        public async Task<IActionResult> GetAgent(string agentName = null)
+        public async Task<IActionResult> GetAgent(string? agentName = null)
         {
             try
             {
@@ -88,7 +88,7 @@ namespace retail_rag_web_app.Controllers
         /// Delete a knowledge agent
         /// </summary>
         [HttpDelete("delete/{agentName?}")]
-        public async Task<IActionResult> DeleteAgent(string agentName = null)
+        public async Task<IActionResult> DeleteAgent(string? agentName = null)
         {
             try
             {
@@ -140,7 +140,7 @@ namespace retail_rag_web_app.Controllers
         /// Setup and ensure knowledge agent exists with optimal settings
         /// </summary>
         [HttpPost("setup")]
-        public async Task<IActionResult> SetupAgent([FromBody] SetupAgentRequest request = null)
+        public async Task<IActionResult> SetupAgent([FromBody] SetupAgentRequest? request = null)
         {
             try
             {

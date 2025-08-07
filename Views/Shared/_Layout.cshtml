@@ -436,7 +436,9 @@
         // Fallback to CDN if local jQuery fails
         if (typeof window.jQuery === 'undefined') {
             console.log('Local jQuery failed, loading from CDN...');
-            document.write('<script src="https://code.jquery.com/jquery-3.6.0.min.js"><\/script>');
+            var script = document.createElement('script');
+            script.src = 'https://code.jquery.com/jquery-3.6.0.min.js';
+            document.head.appendChild(script);
         }
         console.log('jQuery loaded');
     </script>

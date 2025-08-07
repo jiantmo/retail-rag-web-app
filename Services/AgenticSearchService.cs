@@ -26,6 +26,19 @@ namespace retail_rag_web_app.Services
                 // Perform the agentic retrieval
                 var response = await _knowledgeAgentService.TestKnowledgeAgentAsync(query, null, "user", assistantContext);
 
+                // Check for null response
+                if (response == null)
+                {
+                    _logger.LogWarning("Received null response from knowledge agent");
+                    return new AgenticSearchDetails
+                    {
+                        OriginalQuery = query,
+                        FinalContent = "No response received from knowledge agent.",
+                        AllReferences = new List<AgenticSearchReference>(),
+                        SubQueries = new List<SubQueryResult>()
+                    };
+                }
+
                 // Process the response to extract detailed information
                 var details = ProcessAgenticResponse(query, response);
 

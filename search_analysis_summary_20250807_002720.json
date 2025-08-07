@@ -1,0 +1,149 @@
+{
+    "GeneratedAt": "2025-08-07T00:27:20.915915",
+    "SourceFile": "dataverse_results_20250806_225629_results.jsonl",
+    "TotalQuestions": 24988,
+    "AverageScore": 24.66,
+    "OverallMetrics": {
+        "SuccessfulRequests": 24984,
+        "FailedRequests": 4,
+        "SuccessRate": 99.98,
+        "QuestionsWithResults": 17339,
+        "QuestionsWithoutResults": 7649,
+        "AverageResponseTime": 7.472,
+        "AverageResultCount": 7.8
+    },
+    "ScoreDistribution": {
+        "Excellent (90-100)": 0,
+        "Good (70-89)": 58,
+        "Fair (50-69)": 637,
+        "Poor (30-49)": 14303,
+        "Failed (0-29)": 9990
+    },
+    "QuestionTypes": {
+        "price_inquiry": 4327,
+        "other": 9200,
+        "product_search": 949,
+        "recommendation": 2681,
+        "general_info": 7059,
+        "specification": 85,
+        "comparison": 687
+    },
+    "ErrorAnalysis": {
+        "HTTPError": 4
+    },
+    "FileDetails": [
+        {
+            "FileName": "questions_run_001.json",
+            "QuestionCount": 1904,
+            "AverageScore": 24.33,
+            "SuccessfulRequests": 1619,
+            "FailedRequests": 285
+        },
+        {
+            "FileName": "questions_run_001_improved.json",
+            "QuestionCount": 45,
+            "AverageScore": 21.0,
+            "SuccessfulRequests": 40,
+            "FailedRequests": 5
+        },
+        {
+            "FileName": "questions_run_002.json",
+            "QuestionCount": 1910,
+            "AverageScore": 24.52,
+            "SuccessfulRequests": 1612,
+            "FailedRequests": 298
+        },
+        {
+            "FileName": "questions_run_002_improved.json",
+            "QuestionCount": 24,
+            "AverageScore": 23.12,
+            "SuccessfulRequests": 24,
+            "FailedRequests": 0
+        },
+        {
+            "FileName": "questions_run_003.json",
+            "QuestionCount": 1904,
+            "AverageScore": 24.65,
+            "SuccessfulRequests": 1630,
+            "FailedRequests": 274
+        },
+        {
+            "FileName": "questions_run_004.json",
+            "QuestionCount": 1893,
+            "AverageScore": 24.23,
+            "SuccessfulRequests": 1614,
+            "FailedRequests": 279
+        },
+        {
+            "FileName": "questions_run_005.json",
+            "QuestionCount": 1885,
+            "AverageScore": 24.78,
+            "SuccessfulRequests": 1603,
+            "FailedRequests": 282
+        },
+        {
+            "FileName": "questions_run_006.json",
+            "QuestionCount": 1900,
+            "AverageScore": 25.17,
+            "SuccessfulRequests": 1633,
+            "FailedRequests": 267
+        },
+        {
+            "FileName": "questions_run_007.json",
+            "QuestionCount": 1910,
+            "AverageScore": 24.99,
+            "SuccessfulRequests": 1631,
+            "FailedRequests": 279
+        },
+        {
+            "FileName": "questions_run_008.json",
+            "QuestionCount": 1901,
+            "AverageScore": 24.71,
+            "SuccessfulRequests": 1617,
+            "FailedRequests": 284
+        },
+        {
+            "FileName": "questions_run_009.json",
+            "QuestionCount": 1903,
+            "AverageScore": 24.36,
+            "SuccessfulRequests": 1603,
+            "FailedRequests": 300
+        },
+        {
+            "FileName": "questions_run_010.json",
+            "QuestionCount": 1908,
+            "AverageScore": 25.24,
+            "SuccessfulRequests": 1660,
+            "FailedRequests": 248
+        },
+        {
+            "FileName": "questions_run_011.json",
+            "QuestionCount": 1902,
+            "AverageScore": 24.5,
+            "SuccessfulRequests": 1627,
+            "FailedRequests": 275
+        },
+        {
+            "FileName": "questions_run_012.json",
+            "QuestionCount": 1900,
+            "AverageScore": 24.98,
+            "SuccessfulRequests": 1628,
+            "FailedRequests": 272
+        },
+        {
+            "FileName": "questions_run_013.json",
+            "QuestionCount": 1894,
+            "AverageScore": 24.33,
+            "SuccessfulRequests": 1594,
+            "FailedRequests": 300
+        },
+        {
+            "FileName": "questions_run_014.json",
+            "QuestionCount": 205,
+            "AverageScore": 24.22,
+            "SuccessfulRequests": 173,
+            "FailedRequests": 32
+        }
+    ],
+    "TotalFiles": 16
+}

@@ -59,8 +59,8 @@ namespace retail_rag_web_app.Controllers
 
                 // 设置SSE响应头
                 Response.ContentType = "text/event-stream";
-                Response.Headers.Add("Cache-Control", "no-cache");
-                Response.Headers.Add("X-Accel-Buffering", "no");
+                Response.Headers["Cache-Control"] = "no-cache";
+                Response.Headers["X-Accel-Buffering"] = "no";
 
                 // 开始流式响应
                 await foreach (var chunk in _agenticService.AgenticRetrieveStreamAsync(request.Query, request.SystemPrompt))
