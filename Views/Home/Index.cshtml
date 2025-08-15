@@ -1,0 +1,103 @@
+@{
+    ViewData["Title"] = "Welcome - Retail AI Assistant";
+}
+
+<script>
+    // 自动重定向到搜索页面
+    window.location.href = '/search';
+</script>
+
+<div class="container mt-5">
+    <div class="row justify-content-center min-vh-75 align-items-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="search-container text-center">
+                <!-- Hero Section -->
+                <div class="hero-section mb-5">
+                    <div class="hero-icon mb-4">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h1 class="hero-title mb-3">
+                        Redirecting to AI Search...
+                    </h1>
+                    <p class="hero-subtitle mb-4">
+                        Taking you to the AI Product Search interface.
+                    </p>
+                    
+                    <!-- Manual link in case JavaScript is disabled -->
+                    <a href="/search" class="btn btn-cta">
+                        <i class="fas fa-rocket me-2"></i>
+                        Go to Search
+                        <i class="fas fa-arrow-right ms-2"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .min-vh-75 {
+        min-height: 75vh;
+    }
+    
+    .hero-section {
+        padding: 2rem 0;
+    }
+    
+    .hero-icon {
+        font-size: 4rem;
+        background: var(--accent-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .hero-title {
+        font-size: 3rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #fff, #f8f9fa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1.2;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.8);
+        line-height: 1.6;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .btn-cta {
+        background: var(--accent-gradient);
+        color: white;
+        border: none;
+        border-radius: 16px;
+        padding: 1rem 2.5rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-light);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    .btn-cta:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-heavy);
+        color: white;
+    }
+    
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2.5rem;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.1rem;
+        }
+    }
+</style>

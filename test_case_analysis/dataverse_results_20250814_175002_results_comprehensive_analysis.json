@@ -1,0 +1,620 @@
+{
+  "executive_summary": {
+    "title": "Comprehensive Search Engine Evaluation Results",
+    "analysis_overview": {
+      "file_analyzed": "C:\\github\\retail-rag-web-app\\test_case_analysis\\dataverse_results_20250814_175002_results.jsonl",
+      "total_searches": "36 queries",
+      "success_rate": "100.0% (all searches completed successfully)",
+      "average_response_time": "8.1 seconds per query"
+    },
+    "key_performance_metrics": {
+      "1_relevance_metrics": {
+        "description": "Primary Quality Indicators",
+        "precision_at_k": {
+          "description": "Measures accuracy of top K results",
+          "P@1": "0.306 (30.6% of top results are relevant)",
+          "P@10": "0.180 (18.0% of top 10 results are relevant)"
+        },
+        "recall_at_k": {
+          "description": "Measures completeness of retrieval",
+          "R@1": "0.306 (finds 30.6% of all relevant items in top 1)",
+          "R@10": "0.944 (finds 94.4% - good recall)"
+        },
+        "f1_score_at_k": {
+          "description": "Balanced measure of precision and recall",
+          "F1@10": "0.302 (30.2% overall relevance quality)"
+        }
+      },
+      "2_ranking_quality_metrics": {
+        "MAP": "0.306 - Fair ranking of relevant results",
+        "MRR": "0.306 - First relevant result typically at position ~3.3",
+        "NDCG@10": "0.306 - Decent ranking quality considering relevance grades"
+      },
+      "3_coverage_and_performance": {
+        "zero_results_rate": "19.4% (7 out of 36 queries returned no results)",
+        "average_results_per_query": "6.19 products found",
+        "response_time_analysis": "P95 = 18.8 seconds (some queries are slow)"
+      }
+    },
+    "metric_calculations": {
+      "precision_at_k": "Precision@K = (Number of relevant items in top K results) / K",
+      "recall_at_k": "Recall@K = (Number of relevant items in top K results) / (Total relevant items available)",
+      "f1_score_at_k": "F1@K = 2 × (Precision@K × Recall@K) / (Precision@K + Recall@K)",
+      "map": "MAP = Average of precision scores at each relevant document position",
+      "ndcg_at_k": "NDCG@K = DCG@K / IDCG@K, where DCG considers relevance scores and position discounting",
+      "mrr": "MRR = Average of reciprocal ranks of first relevant result (1/rank)"
+    },
+    "question_type_performance": {
+      "Category + Attribute value": "Balanced performance (3.3 avg results, 7.44s)",
+      "Exact word": "Balanced performance (3.6 avg results, fastest at 7.81s)",
+      "Category + Price range": "Highest recall (14.6 avg results, 9.61s)",
+      "Category": "Balanced performance (3.1 avg results, 6.43s)",
+      "Description": "Highest recall (9.2 avg results, 11.22s)"
+    },
+    "category_performance": {
+      "clothing": "Good results (9.2 avg) - good coverage",
+      "footwear": "Good results (1.2 avg) - good coverage",
+      "bike": "Highest result count (14.2 avg) - possibly too broad",
+      "shorts_pants": "Good results (4.0 avg) - good coverage",
+      "gloves": "Good results (4.2 avg) - good coverage",
+      "tent": "Good results (3.7 avg) - good coverage",
+      "accessory": "Good results (3.2 avg) - good coverage",
+      "backpack": "Zero results on average - potential coverage gap"
+    },
+    "detailed_question_type_relevance": {
+      "Category + Attribute value": {
+        "query_count": 3,
+        "precision_metrics": {
+          "P@1": "0.000",
+          "P@3": "0.000",
+          "P@5": "0.000",
+          "P@10": "0.000"
+        },
+        "recall_metrics": {
+          "R@1": "0.000",
+          "R@3": "0.000",
+          "R@5": "0.000",
+          "R@10": "0.000"
+        },
+        "f1_metrics": {
+          "F1@1": "0.000",
+          "F1@3": "0.000",
+          "F1@5": "0.000",
+          "F1@10": "0.000"
+        },
+        "ranking_quality": {
+          "MAP": "0.000",
+          "MRR": "0.000",
+          "NDCG@1": "0.000",
+          "NDCG@3": "0.000",
+          "NDCG@5": "0.000",
+          "NDCG@10": "0.000"
+        },
+        "relevance_summary": {
+          "found_items": 0,
+          "exact_matches": 0,
+          "avg_relevance_per_query": "0.0",
+          "search_effectiveness": "Found 0 relevant results across 3 queries"
+        }
+      },
+      "Exact word": {
+        "query_count": 11,
+        "precision_metrics": {
+          "P@1": "0.455",
+          "P@3": "0.394",
+          "P@5": "0.364",
+          "P@10": "0.322"
+        },
+        "recall_metrics": {
+          "R@1": "0.455",
+          "R@3": "0.636",
+          "R@5": "0.727",
+          "R@10": "0.727"
+        },
+        "f1_metrics": {
+          "F1@1": "0.455",
+          "F1@3": "0.487",
+          "F1@5": "0.485",
+          "F1@10": "0.446"
+        },
+        "ranking_quality": {
+          "MAP": "0.455",
+          "MRR": "0.455",
+          "NDCG@1": "0.455",
+          "NDCG@3": "0.455",
+          "NDCG@5": "0.455",
+          "NDCG@10": "0.455"
+        },
+        "relevance_summary": {
+          "found_items": 7.0,
+          "exact_matches": 3,
+          "avg_relevance_per_query": "0.6",
+          "search_effectiveness": "Found 7.0 relevant results across 11 queries"
+        }
+      },
+      "Category + Price range": {
+        "query_count": 7,
+        "precision_metrics": {
+          "P@1": "0.143",
+          "P@3": "0.143",
+          "P@5": "0.086",
+          "P@10": "0.043"
+        },
+        "recall_metrics": {
+          "R@1": "0.143",
+          "R@3": "0.429",
+          "R@5": "0.429",
+          "R@10": "0.429"
+        },
+        "f1_metrics": {
+          "F1@1": "0.143",
+          "F1@3": "0.214",
+          "F1@5": "0.143",
+          "F1@10": "0.078"
+        },
+        "ranking_quality": {
+          "MAP": "0.143",
+          "MRR": "0.143",
+          "NDCG@1": "0.143",
+          "NDCG@3": "0.143",
+          "NDCG@5": "0.143",
+          "NDCG@10": "0.143"
+        },
+        "relevance_summary": {
+          "found_items": 3,
+          "exact_matches": 0,
+          "avg_relevance_per_query": "0.4",
+          "search_effectiveness": "Found 3 relevant results across 7 queries"
+        }
+      },
+      "Category": {
+        "query_count": 11,
+        "precision_metrics": {
+          "P@1": "0.182",
+          "P@3": "0.182",
+          "P@5": "0.182",
+          "P@10": "0.182"
+        },
+        "recall_metrics": {
+          "R@1": "0.182",
+          "R@3": "0.545",
+          "R@5": "0.909",
+          "R@10": "1.727"
+        },
+        "f1_metrics": {
+          "F1@1": "0.182",
+          "F1@3": "0.273",
+          "F1@5": "0.303",
+          "F1@10": "0.329"
+        },
+        "ranking_quality": {
+          "MAP": "0.182",
+          "MRR": "0.182",
+          "NDCG@1": "0.182",
+          "NDCG@3": "0.182",
+          "NDCG@5": "0.182",
+          "NDCG@10": "0.182"
+        },
+        "relevance_summary": {
+          "found_items": 20,
+          "exact_matches": 1,
+          "avg_relevance_per_query": "1.8",
+          "search_effectiveness": "Found 20 relevant results across 11 queries"
+        }
+      },
+      "Description": {
+        "query_count": 4,
+        "precision_metrics": {
+          "P@1": "0.750",
+          "P@3": "0.333",
+          "P@5": "0.233",
+          "P@10": "0.158"
+        },
+        "recall_metrics": {
+          "R@1": "0.750",
+          "R@3": "1.000",
+          "R@5": "1.000",
+          "R@10": "1.000"
+        },
+        "f1_metrics": {
+          "F1@1": "0.750",
+          "F1@3": "0.500",
+          "F1@5": "0.378",
+          "F1@10": "0.273"
+        },
+        "ranking_quality": {
+          "MAP": "0.750",
+          "MRR": "0.750",
+          "NDCG@1": "0.750",
+          "NDCG@3": "0.750",
+          "NDCG@5": "0.750",
+          "NDCG@10": "0.750"
+        },
+        "relevance_summary": {
+          "found_items": 4.0,
+          "exact_matches": 0,
+          "avg_relevance_per_query": "1.0",
+          "search_effectiveness": "Found 4.0 relevant results across 4 queries"
+        }
+      }
+    }
+  },
+  "detailed_analysis": {
+    "file_info": {
+      "file_path": "C:\\github\\retail-rag-web-app\\test_case_analysis\\dataverse_results_20250814_175002_results.jsonl",
+      "file_size_mb": 0.37,
+      "total_lines": 36,
+      "valid_results": 36,
+      "parsing_success_rate": 100.0
+    },
+    "search_performance": {
+      "total_searches": 36,
+      "successful_searches": 36,
+      "failed_searches": 0,
+      "success_rate": 100.0,
+      "avg_response_time_ms": 8085.262921121385,
+      "median_response_time_ms": 7262.069821357727,
+      "p95_response_time_ms": 18805.087566375732,
+      "p99_response_time_ms": 21004.202127456665,
+      "min_response_time_ms": 1173.3503341674805,
+      "max_response_time_ms": 21004.202127456665,
+      "status_code_distribution": {
+        "200": 36
+      }
+    },
+    "relevance_metrics": {
+      "precision_at_k": {
+        "P@1": 0.3055555555555556,
+        "P@3": 0.24074074074074073,
+        "P@5": 0.20925925925925926,
+        "P@10": 0.17989417989417988
+      },
+      "recall_at_k": {
+        "R@1": 0.3055555555555556,
+        "R@3": 0.5555555555555556,
+        "R@5": 0.6944444444444444,
+        "R@10": 0.9444444444444444
+      },
+      "f1_score_at_k": {
+        "F1@1": 0.3055555555555556,
+        "F1@3": 0.3359173126614987,
+        "F1@5": 0.3216074681238616,
+        "F1@10": 0.3022222222222223
+      },
+      "map_score": 0.3055555555555556,
+      "ndcg_at_k": {
+        "NDCG@1": 0.3055555555555556,
+        "NDCG@3": 0.3055555555555556,
+        "NDCG@5": 0.3055555555555556,
+        "NDCG@10": 0.3055555555555556
+      },
+      "mrr_score": 0.3055555555555556,
+      "relevance_analysis": {
+        "total_queries_analyzed": 36,
+        "total_relevant_items_found": 34.0,
+        "exact_name_matches": 4,
+        "average_relevance_per_query": 0.9444444444444444,
+        "search_effectiveness": "Found 34.0 relevant results across 36 queries"
+      },
+      "calculation_explanations": {
+        "precision_at_k": "Precision@K = (Relevant items in top K results) / K",
+        "recall_at_k": "Recall@K = (Relevant items in top K results) / (Total relevant items)",
+        "f1_score_at_k": "F1@K = 2 × (Precision@K × Recall@K) / (Precision@K + Recall@K)",
+        "map_score": "MAP = Average of precision scores at each relevant document position",
+        "ndcg_at_k": "NDCG@K = DCG@K / IDCG@K, where DCG considers relevance scores and position discounting",
+        "mrr_score": "MRR = Average of reciprocal ranks of first relevant result (1/rank)"
+      },
+      "question_type_breakdown": {
+        "Category + Attribute value": {
+          "precision_at_k": {
+            "P@1": 0.0,
+            "P@3": 0.0,
+            "P@5": 0.0,
+            "P@10": 0.0
+          },
+          "recall_at_k": {
+            "R@1": 0.0,
+            "R@3": 0.0,
+            "R@5": 0.0,
+            "R@10": 0.0
+          },
+          "f1_score_at_k": {
+            "F1@1": 0,
+            "F1@3": 0,
+            "F1@5": 0,
+            "F1@10": 0
+          },
+          "map_score": 0,
+          "ndcg_at_k": {
+            "NDCG@1": 0,
+            "NDCG@3": 0,
+            "NDCG@5": 0,
+            "NDCG@10": 0
+          },
+          "mrr_score": 0,
+          "query_count": 3,
+          "relevance_analysis": {
+            "total_queries_analyzed": 3,
+            "total_relevant_items_found": 0,
+            "exact_name_matches": 0,
+            "average_relevance_per_query": 0.0,
+            "search_effectiveness": "Found 0 relevant results across 3 queries"
+          }
+        },
+        "Exact word": {
+          "precision_at_k": {
+            "P@1": 0.45454545454545453,
+            "P@3": 0.3939393939393939,
+            "P@5": 0.36363636363636365,
+            "P@10": 0.3220779220779221
+          },
+          "recall_at_k": {
+            "R@1": 0.45454545454545453,
+            "R@3": 0.6363636363636364,
+            "R@5": 0.7272727272727273,
+            "R@10": 0.7272727272727273
+          },
+          "f1_score_at_k": {
+            "F1@1": 0.45454545454545453,
+            "F1@3": 0.4866310160427807,
+            "F1@5": 0.4848484848484849,
+            "F1@10": 0.4464446444644465
+          },
+          "map_score": 0.45454545454545453,
+          "ndcg_at_k": {
+            "NDCG@1": 0.45454545454545453,
+            "NDCG@3": 0.45454545454545453,
+            "NDCG@5": 0.45454545454545453,
+            "NDCG@10": 0.45454545454545453
+          },
+          "mrr_score": 0.45454545454545453,
+          "query_count": 11,
+          "relevance_analysis": {
+            "total_queries_analyzed": 11,
+            "total_relevant_items_found": 7.0,
+            "exact_name_matches": 3,
+            "average_relevance_per_query": 0.6363636363636364,
+            "search_effectiveness": "Found 7.0 relevant results across 11 queries"
+          }
+        },
+        "Category + Price range": {
+          "precision_at_k": {
+            "P@1": 0.14285714285714285,
+            "P@3": 0.14285714285714285,
+            "P@5": 0.08571428571428572,
+            "P@10": 0.04285714285714286
+          },
+          "recall_at_k": {
+            "R@1": 0.14285714285714285,
+            "R@3": 0.42857142857142855,
+            "R@5": 0.42857142857142855,
+            "R@10": 0.42857142857142855
+          },
+          "f1_score_at_k": {
+            "F1@1": 0.14285714285714285,
+            "F1@3": 0.21428571428571427,
+            "F1@5": 0.14285714285714285,
+            "F1@10": 0.07792207792207792
+          },
+          "map_score": 0.14285714285714285,
+          "ndcg_at_k": {
+            "NDCG@1": 0.14285714285714285,
+            "NDCG@3": 0.14285714285714285,
+            "NDCG@5": 0.14285714285714285,
+            "NDCG@10": 0.14285714285714285
+          },
+          "mrr_score": 0.14285714285714285,
+          "query_count": 7,
+          "relevance_analysis": {
+            "total_queries_analyzed": 7,
+            "total_relevant_items_found": 3,
+            "exact_name_matches": 0,
+            "average_relevance_per_query": 0.42857142857142855,
+            "search_effectiveness": "Found 3 relevant results across 7 queries"
+          }
+        },
+        "Category": {
+          "precision_at_k": {
+            "P@1": 0.18181818181818182,
+            "P@3": 0.18181818181818182,
+            "P@5": 0.18181818181818182,
+            "P@10": 0.18181818181818182
+          },
+          "recall_at_k": {
+            "R@1": 0.18181818181818182,
+            "R@3": 0.5454545454545454,
+            "R@5": 0.9090909090909091,
+            "R@10": 1.7272727272727273
+          },
+          "f1_score_at_k": {
+            "F1@1": 0.18181818181818182,
+            "F1@3": 0.2727272727272727,
+            "F1@5": 0.30303030303030304,
+            "F1@10": 0.329004329004329
+          },
+          "map_score": 0.18181818181818182,
+          "ndcg_at_k": {
+            "NDCG@1": 0.18181818181818182,
+            "NDCG@3": 0.18181818181818182,
+            "NDCG@5": 0.18181818181818182,
+            "NDCG@10": 0.18181818181818185
+          },
+          "mrr_score": 0.18181818181818182,
+          "query_count": 11,
+          "relevance_analysis": {
+            "total_queries_analyzed": 11,
+            "total_relevant_items_found": 20,
+            "exact_name_matches": 1,
+            "average_relevance_per_query": 1.8181818181818181,
+            "search_effectiveness": "Found 20 relevant results across 11 queries"
+          }
+        },
+        "Description": {
+          "precision_at_k": {
+            "P@1": 0.75,
+            "P@3": 0.3333333333333333,
+            "P@5": 0.23333333333333334,
+            "P@10": 0.15833333333333333
+          },
+          "recall_at_k": {
+            "R@1": 0.75,
+            "R@3": 1.0,
+            "R@5": 1.0,
+            "R@10": 1.0
+          },
+          "f1_score_at_k": {
+            "F1@1": 0.75,
+            "F1@3": 0.5,
+            "F1@5": 0.37837837837837834,
+            "F1@10": 0.2733812949640288
+          },
+          "map_score": 0.75,
+          "ndcg_at_k": {
+            "NDCG@1": 0.75,
+            "NDCG@3": 0.75,
+            "NDCG@5": 0.75,
+            "NDCG@10": 0.75
+          },
+          "mrr_score": 0.75,
+          "query_count": 4,
+          "relevance_analysis": {
+            "total_queries_analyzed": 4,
+            "total_relevant_items_found": 4.0,
+            "exact_name_matches": 0,
+            "average_relevance_per_query": 1.0,
+            "search_effectiveness": "Found 4.0 relevant results across 4 queries"
+          }
+        }
+      }
+    },
+    "coverage_metrics": {
+      "total_results_returned": 223,
+      "avg_results_per_query": 6.194444444444445,
+      "median_results_per_query": 1.0,
+      "zero_results_count": 7,
+      "zero_results_rate": 19.444444444444446,
+      "max_results_single_query": 30,
+      "min_results_single_query": 0
+    },
+    "detailed_analysis": {
+      "question_type_distribution": {
+        "Category + Attribute value": 3,
+        "Exact word": 11,
+        "Category + Price range": 7,
+        "Category": 11,
+        "Description": 4
+      },
+      "product_category_distribution": {
+        "clothing": 10,
+        "footwear": 6,
+        "bike": 5,
+        "shorts_pants": 2,
+        "gloves": 5,
+        "tent": 3,
+        "accessory": 4,
+        "backpack": 1
+      },
+      "search_patterns": {
+        "question_success_rates": {
+          "Category + Attribute value": {
+            "success_rate": 100.0,
+            "total_queries": 3,
+            "avg_response_time": 7.442776521046956,
+            "avg_result_count": 3.3333333333333335
+          },
+          "Exact word": {
+            "success_rate": 100.0,
+            "total_queries": 11,
+            "avg_response_time": 7.805539174513384,
+            "avg_result_count": 3.6363636363636362
+          },
+          "Category + Price range": {
+            "success_rate": 100.0,
+            "total_queries": 7,
+            "avg_response_time": 9.611525535583496,
+            "avg_result_count": 14.571428571428571
+          },
+          "Category": {
+            "success_rate": 100.0,
+            "total_queries": 11,
+            "avg_response_time": 6.429028446024114,
+            "avg_result_count": 3.090909090909091
+          },
+          "Description": {
+            "success_rate": 100.0,
+            "total_queries": 4,
+            "avg_response_time": 11.220053255558014,
+            "avg_result_count": 9.25
+          }
+        },
+        "category_performance": {
+          "clothing": {
+            "success_rate": 100.0,
+            "total_queries": 10,
+            "avg_response_time": 10.174774193763733,
+            "avg_result_count": 9.2
+          },
+          "footwear": {
+            "success_rate": 100.0,
+            "total_queries": 6,
+            "avg_response_time": 5.612963795661926,
+            "avg_result_count": 1.1666666666666667
+          },
+          "bike": {
+            "success_rate": 100.0,
+            "total_queries": 5,
+            "avg_response_time": 7.679049348831176,
+            "avg_result_count": 14.2
+          },
+          "shorts_pants": {
+            "success_rate": 100.0,
+            "total_queries": 2,
+            "avg_response_time": 5.604224324226379,
+            "avg_result_count": 4
+          },
+          "gloves": {
+            "success_rate": 100.0,
+            "total_queries": 5,
+            "avg_response_time": 6.3141193866729735,
+            "avg_result_count": 4.2
+          },
+          "tent": {
+            "success_rate": 100.0,
+            "total_queries": 3,
+            "avg_response_time": 13.894900798797607,
+            "avg_result_count": 3.6666666666666665
+          },
+          "accessory": {
+            "success_rate": 100.0,
+            "total_queries": 4,
+            "avg_response_time": 6.778993129730225,
+            "avg_result_count": 3.25
+          },
+          "backpack": {
+            "success_rate": 100.0,
+            "total_queries": 1,
+            "avg_response_time": 5.668973207473755,
+            "avg_result_count": 0
+          }
+        },
+        "response_time_by_type": {},
+        "result_count_patterns": {}
+      }
+    },
+    "metric_calculations": {},
+    "analysis_metadata": {
+      "generated_at": "2025-08-14T17:51:04.874897",
+      "analysis_type": "comprehensive_jsonl_evaluation",
+      "metrics_included": [
+        "precision_at_k",
+        "recall_at_k",
+        "f1_score_at_k",
+        "map_score",
+        "ndcg_at_k",
+        "mrr_score",
+        "response_times",
+        "coverage_metrics"
+      ]
+    }
+  }
+}

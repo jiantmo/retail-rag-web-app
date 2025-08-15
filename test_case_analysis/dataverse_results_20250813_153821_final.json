@@ -1,0 +1,148 @@
+{
+  "test_metadata": {
+    "start_time": "2025-08-13T15:38:21.886986",
+    "total_questions": 9600,
+    "status": "interrupted",
+    "end_time": "2025-08-13T15:38:49.315611",
+    "results_written": 2,
+    "final_statistics": {
+      "total_questions": 9600,
+      "successful_requests": 2,
+      "failed_requests": 0,
+      "success_rate_percentage": 0.020833333333333336,
+      "processing_time_seconds": 27.429632902145386,
+      "processing_rate_per_second": 0.0729138449331406,
+      "average_response_time_seconds": 27.333892226219177,
+      "min_response_time_seconds": 27.32774305343628,
+      "max_response_time_seconds": 27.340041399002075,
+      "status_code_distribution": {
+        "200": 2
+      },
+      "error_type_distribution": {},
+      "average_results_per_query": 0.0,
+      "total_results_returned": 0
+    },
+    "interrupted_by_user": true,
+    "detailed_metrics": {
+      "response_time_analysis": {
+        "all_response_times": [
+          27.32774305343628,
+          27.340041399002075
+        ],
+        "percentiles": {
+          "p50": 27.340041399002075,
+          "p95": 27.340041399002075,
+          "p99": 27.340041399002075
+        }
+      },
+      "result_count_analysis": {
+        "all_result_counts": [
+          0,
+          0
+        ],
+        "max_results_in_single_query": 0,
+        "min_results_in_single_query": 0
+      }
+    }
+  },
+  "results": [
+    {
+      "success": true,
+      "skill": "Product_azzEXjGzazCl78XgkHBkV",
+      "timestamp": "2025-08-13T15:38:49.239540",
+      "status_code": 200,
+      "response_time_seconds": 27.32774305343628,
+      "result_count": 0,
+      "test_case_context": {
+        "original_product_name": "Yarbeck Men's Coat",
+        "original_product_description": "The sub-zero warmth and lightweight comfort of down insulation makes easy work of harsh winter. This hooded jacket's water-repellent nylon shell provides another level of protection.",
+        "original_product_price": 170.0,
+        "original_product_attributes": [
+          {
+            "name": "AW Fabric",
+            "value": "Nylon"
+          },
+          {
+            "name": "Closure",
+            "value": "Zipper"
+          },
+          {
+            "name": "Size",
+            "value": "M"
+          },
+          {
+            "name": "Size",
+            "value": "L"
+          },
+          {
+            "name": "Size",
+            "value": "XL"
+          },
+          {
+            "name": "Size",
+            "value": "XXL"
+          },
+          {
+            "name": "Size",
+            "value": "S"
+          },
+          {
+            "name": "Color",
+            "value": "Horizon"
+          }
+        ],
+        "original_product_category": "sleeping",
+        "question": "I need sleeping with good features - what do you recommend?",
+        "question_type": "Attribute value"
+      },
+      "api_response_products": {
+        "product_names_found": []
+      },
+      "response_data": {
+        "error": null,
+        "query": null,
+        "queryResult": null,
+        "history": null,
+        "additionalProperties": null
+      },
+      "token_refreshed": false
+    },
+    {
+      "success": true,
+      "skill": "Product_azzEXjGzazCl78XgkHBkV",
+      "timestamp": "2025-08-13T15:38:49.245066",
+      "status_code": 200,
+      "response_time_seconds": 27.340041399002075,
+      "result_count": 0,
+      "test_case_context": {
+        "original_product_name": "Contrace Tent",
+        "original_product_description": "Easy setup with unique hub design and pole clips that quickly snap over the fiberglass tent poles\nExtra tall center and straight side walls allow more room for cots and ability to stand up\nWeatherproof fly adds large awnings over front doorway and back window\nFully equipped with mesh storage shelf stakes guy ropes and four large windows.",
+        "original_product_price": 650.0,
+        "original_product_attributes": [
+          {
+            "name": "Color",
+            "value": "Mariner"
+          },
+          {
+            "name": "Color",
+            "value": "Stromboli"
+          }
+        ],
+        "original_product_category": "tent",
+        "question": "I'm considering buying Contrace Tent - is it worth it?",
+        "question_type": "Exact word"
+      },
+      "api_response_products": {
+        "product_names_found": []
+      },
+      "response_data": {
+        "error": null,
+        "query": null,
+        "queryResult": null,
+        "history": null,
+        "additionalProperties": null
+      },
+      "token_refreshed": false
+    }
+  ]
+}

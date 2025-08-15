@@ -1,0 +1,27 @@
+{
+  "checkpoint_metadata": {
+    "timestamp": "2025-08-14T17:50:24.052704",
+    "completed": 36,
+    "successful": 36,
+    "failed": 0,
+    "results_written": 36,
+    "processing_duration_seconds": 21.412079572677612,
+    "current_statistics": {
+      "total_questions": 9600,
+      "successful_requests": 36,
+      "failed_requests": 0,
+      "success_rate_percentage": 0.375,
+      "processing_time_seconds": 21.412079572677612,
+      "processing_rate_per_second": 1.6812939573574612,
+      "average_response_time_seconds": 8.085262921121386,
+      "min_response_time_seconds": 1.1733503341674805,
+      "max_response_time_seconds": 21.004202127456665,
+      "status_code_distribution": {
+        "200": 36
+      },
+      "error_type_distribution": {},
+      "average_results_per_query": 6.194444444444445,
+      "total_results_returned": 223
+    }
+  }
+}

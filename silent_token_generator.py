@@ -314,7 +314,7 @@ def main():
                 print("🎉 Token saved and ready for use!")
                 
                 # Test token validity
-                from multi_thread_runner import DataverseSearchClient
+                from multi_thread_unified_search import DataverseSearchClient
                 try:
                     client = DataverseSearchClient()
                     if client._is_token_valid():
