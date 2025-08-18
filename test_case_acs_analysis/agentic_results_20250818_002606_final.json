@@ -1,0 +1,48 @@
+{
+  "metadata": {
+    "script_version": "multi_thread_agentic_search.py",
+    "completion_timestamp": "2025-08-18T09:42:48.700883",
+    "execution_mode": "agentic_search_api",
+    "total_execution_time_seconds": 33401.92340564728
+  },
+  "final_statistics": {
+    "total_questions": 9600,
+    "successful_requests": 1370,
+    "failed_requests": 3,
+    "success_rate_percentage": 15.594763801935116,
+    "processing_time_seconds": 33401.92340564728,
+    "processing_rate_per_second": 0.04110541729365999,
+    "average_response_time_seconds": 4.8915438780538025,
+    "min_response_time_seconds": 0.0020592212677001953,
+    "max_response_time_seconds": 15.261018514633179,
+    "status_code_distribution": {
+      "200": 1370
+    },
+    "error_type_distribution": {
+      "request_error": 3
+    },
+    "throttled_requests": 815,
+    "throttling_rate_percentage": 8.489583333333334,
+    "non_throttled_total": 8785,
+    "average_results_per_query": 0.0,
+    "total_results_returned": 0
+  },
+  "throttling_summary": {
+    "throttled_requests": 815,
+    "throttling_rate": 8.489583333333334,
+    "throttled_examples": [
+      "Error processing search request: Agentic retrieval failed: TooManyRequests - {\"error\":{\"code\":\"\",\"message\":\"Could not complete model action. The model endpoint returned status code '429' (TooManyReque",
+      "Error processing search request: Agentic retrieval failed: TooManyRequests - {\"error\":{\"code\":\"\",\"message\":\"Could not complete model action. The model endpoint returned status code '429' (TooManyReque",
+      "Error processing search request: Agentic retrieval failed: TooManyRequests - {\"error\":{\"code\":\"\",\"message\":\"Could not complete model action. The model endpoint returned status code '429' (TooManyReque"
+    ],
+    "note": "Throttled requests (HTTP 429) are excluded from analysis results"
+  },
+  "summary": {
+    "questions_processed": 1373,
+    "questions_analyzed": 558,
+    "success_rate": 15.594763801935116,
+    "average_response_time": 4.8915438780538025,
+    "total_results_found": 0,
+    "note": "Analysis excludes throttled requests (HTTP 429)"
+  }
+}

@@ -226,6 +226,12 @@ class AgenticSearchAnalyzer:
                 
             # Extract test case context
             test_context = result.get('test_case_context', {})
+            query_metadata = result.get('query_metadata', {})
+            
+            # Use query_metadata if test_case_context is empty
+            if not test_context and query_metadata:
+                test_context = query_metadata
+            
             question_type = test_context.get('question_type', 'Unknown')
             
             # Extract products from agentic search response
@@ -235,10 +241,10 @@ class AgenticSearchAnalyzer:
             
             total_product_items_extracted += len(detailed_results)
             
-            # Calculate relevance scores using improved scorer
+            # Calculate relevance scores using agentic-specific logic
             relevance_scores = []
             for product_item in detailed_results:
-                score = self.relevance_scorer.score_result_relevance(product_item, test_context)
+                score = self._score_agentic_relevance(product_item, test_context)
                 relevance_scores.append(score)
             
             # Count relevant items and exact matches
@@ -395,14 +401,64 @@ class AgenticSearchAnalyzer:
             if description_match:
                 product['Description'] = description_match.group(1).strip()
             
-            # Extract attributes (simplified)
-            # Look for Size values
-            size_values = re.findall(r"'TextValue':\s*'([^']*)'", content)
-            if size_values:
-                product['Attributes'] = {'sizes': size_values}
+            # Store the full content for attribute scoring
+            product['FullContent'] = content
+            
+            # Extract AttributeValues using improved parsing
+            attributes = {}
+            try:
+                # Look for AttributeValues section
+                attr_values_match = re.search(r'AttributeValues:\s*(\[.*?\])', content, re.DOTALL)
+                if attr_values_match:
+                    attr_text = attr_values_match.group(1)
+                    
+                    # Extract TextValue attributes with various quote patterns
+                    text_value_patterns = [
+                        r"'TextValue':\s*'([^']+)'",  # Single quotes
+                        r'"TextValue":\s*"([^"]+)"',  # Double quotes
+                        r"'TextValue':\s*\"([^\"]+)\"",  # Mixed quotes
+                    ]
+                    
+                    for pattern in text_value_patterns:
+                        matches = re.findall(pattern, attr_text)
+                        for match in matches:
+                            # Try to categorize the attribute
+                            if re.match(r'^[MLXS].*|.*[MLXS]$', match, re.IGNORECASE):
+                                if 'sizes' not in attributes:
+                                    attributes['sizes'] = []
+                                # Handle pipe-separated sizes
+                                sizes = [s.strip() for s in match.split('|') if s.strip()]
+                                attributes['sizes'].extend(sizes)
+                            else:
+                                if 'materials' not in attributes:
+                                    attributes['materials'] = []
+                                attributes['materials'].append(match.lower())
+                    
+                    # Extract Color values specifically
+                    color_patterns = [
+                        r"'Color'[^}]*'TextValue':\s*'([^']+)'",
+                        r'"Color"[^}]*"TextValue":\s*"([^"]+)"',
+                        r"'Color'[^}]*'TextValue':\s*\"([^\"]+)\"",
+                    ]
+                    
+                    for pattern in color_patterns:
+                        color_matches = re.findall(pattern, attr_text)
+                        for color in color_matches:
+                            if 'colors' not in attributes:
+                                attributes['colors'] = []
+                            # Handle pipe-separated colors
+                            colors = [c.strip() for c in color.split('|') if c.strip()]
+                            attributes['colors'].extend(colors)
+                    
+                    product['Attributes'] = attributes
+                    
+            except Exception as e:
+                # Fallback to basic attribute extraction
+                # Store the full content so attribute scoring can access it
+                pass
             
             # Only return product if we have essential fields
-            if 'Name' in product and 'Price' in product:
+            if 'Name' in product:
                 return product
             
             return None
@@ -495,6 +551,306 @@ class AgenticSearchAnalyzer:
             
         except Exception:
             return 'Error extracting error message'
+    
+    def _score_agentic_relevance(self, product: Dict, test_context: Dict) -> int:
+        """
+        Score relevance for agentic search results based on question context
+        
+        Args:
+            product: Extracted product data from agentic response
+            test_context: Test context containing question and type
+            
+        Returns:
+            Relevance score: 0-3 (0=not relevant, 3=highly relevant)
+        """
+        try:
+            question_type = test_context.get('question_type', '').strip()
+            question_text = test_context.get('question', '').lower()
+            
+            # Get product information
+            product_name = product.get('Name', '').lower()
+            product_description = product.get('Description', '').lower()
+            product_price = product.get('Price', 0)
+            product_attributes = product.get('Attributes', {})
+            product_full_content = product.get('FullContent', '')
+            
+            # Create combined text for searching
+            product_text = f"{product_name} {product_description}".lower()
+            
+            # Question type specific scoring
+            if question_type == "Exact word":
+                return self._score_exact_word_agentic(question_text, product_name, product_text)
+            
+            elif question_type == "Category":
+                return self._score_category_agentic(question_text, product_text, product_name)
+            
+            elif question_type == "Category + Price range":
+                return self._score_price_range_agentic(question_text, product_text, product_price)
+            
+            elif question_type == "Category + Attribute value":
+                return self._score_attribute_agentic(question_text, product_full_content, product_attributes)
+            
+            elif question_type == "Description":
+                return self._score_description_agentic(question_text, product_text, product_name)
+            
+            else:
+                # General relevance for unknown types
+                return self._score_general_agentic(question_text, product_text, product_name)
+                
+        except Exception as e:
+            return 0
+    
+    def _score_exact_word_agentic(self, question: str, product_name: str, product_text: str) -> int:
+        """Score exact word matches"""
+        # Extract product name from question
+        for word in question.split():
+            if len(word) > 3 and word in product_name:
+                if word in product_name.split():
+                    return 3  # Exact match
+                else:
+                    return 2  # Partial match
+        
+        # Check for brand/model matches
+        question_words = set(question.lower().split())
+        product_words = set(product_name.split())
+        
+        if len(question_words & product_words) >= 2:
+            return 2
+        elif len(question_words & product_words) >= 1:
+            return 1
+            
+        return 0
+    
+    def _score_category_agentic(self, question: str, product_text: str, product_name: str) -> int:
+        """Score category matches"""
+        category_keywords = {
+            'clothing': ['clothing', 'shirt', 'jacket', 'coat', 'vest', 'hoodie', 'sweater'],
+            'footwear': ['shoes', 'boots', 'sneakers', 'sandals'],
+            'bike': ['bike', 'bicycle', 'cycling'],
+            'tent': ['tent', 'shelter'],
+            'backpack': ['backpack', 'pack', 'bag'],
+            'gloves': ['gloves', 'glove'],
+            'helmet': ['helmet'],
+            'accessory': ['accessory', 'gear', 'equipment']
+        }
+        
+        question_words = question.lower().split()
+        
+        for category, keywords in category_keywords.items():
+            # Check if question mentions this category
+            if any(keyword in question for keyword in keywords):
+                # Check if product belongs to this category
+                if any(keyword in product_text for keyword in keywords):
+                    return 3  # High relevance
+                elif any(keyword in product_name for keyword in keywords):
+                    return 2  # Medium relevance
+        
+        return 0
+    
+    def _score_price_range_agentic(self, question: str, product_text: str, product_price: float) -> int:
+        """Score price range matches"""
+        import re
+        
+        # Extract price range from question
+        price_patterns = [
+            r'\$(\d+)-\$?(\d+)',  # $80-$120 or $80-120
+            r'between \$?(\d+) and \$?(\d+)',  # between $80 and $120
+            r'under \$?(\d+)',  # under $100
+            r'over \$?(\d+)',  # over $50
+        ]
+        
+        for pattern in price_patterns:
+            match = re.search(pattern, question)
+            if match:
+                if 'under' in question:
+                    max_price = float(match.group(1))
+                    if product_price <= max_price:
+                        return 3
+                elif 'over' in question:
+                    min_price = float(match.group(1))
+                    if product_price >= min_price:
+                        return 3
+                else:
+                    # Range query
+                    min_price = float(match.group(1))
+                    max_price = float(match.group(2))
+                    if min_price <= product_price <= max_price:
+                        return 3  # Perfect price match
+                    elif abs(product_price - min_price) <= 20 or abs(product_price - max_price) <= 20:
+                        return 2  # Close to range
+        
+        # Also check for category relevance
+        category_score = self._score_category_agentic(question, product_text, product_text.split()[0] if product_text else "")
+        return min(category_score, 2)  # Price relevance but not perfect
+    
+    def _score_attribute_agentic(self, question: str, product_text: str, product_attributes: Dict) -> int:
+        """Score attribute matches with improved dynamic attribute extraction"""
+        # Common attribute keywords
+        attribute_keywords = {
+            'nylon': ['nylon'],
+            'cotton': ['cotton'],
+            'leather': ['leather'],
+            'waterproof': ['waterproof', 'water-resistant'],
+            'breathable': ['breathable'],
+            'insulated': ['insulated', 'insulation'],
+            'lightweight': ['lightweight', 'light'],
+        }
+        
+        question_lower = question.lower()
+        product_text_lower = product_text.lower()
+        
+        # First check predefined attribute keywords
+        for attr_name, keywords in attribute_keywords.items():
+            if any(keyword in question_lower for keyword in keywords):
+                # Check if product has this attribute
+                if any(keyword in product_text_lower for keyword in keywords):
+                    return 3  # Perfect attribute match
+                
+                # Check in attributes dict if available
+                if product_attributes:
+                    attr_text = str(product_attributes).lower()
+                    if any(keyword in attr_text for keyword in keywords):
+                        return 3
+        
+        # Enhanced: Extract and match dynamic attributes from product data
+        import re
+        import json
+        
+        # Extract AttributeValues from product text if available
+        attribute_values = []
+        try:
+            # Look for AttributeValues in the product text (using both single and double quotes)
+            attr_patterns = [
+                r"'TextValue':\s*'([^']+)'",  # Single quotes
+                r'"TextValue":\s*"([^"]+)"',  # Double quotes
+                r"'TextValue':\s*\"([^\"]+)\"",  # Mixed quotes
+            ]
+            for pattern in attr_patterns:
+                matches = re.findall(pattern, product_text)
+                attribute_values.extend([val.lower() for val in matches])
+            
+            # Also extract from Color attribute specifically
+            color_patterns = [
+                r"'Color'[^}]*'TextValue':\s*'([^']+)'",
+                r'"Color"[^}]*"TextValue":\s*"([^"]+)"',
+                r"'Color'[^}]*'TextValue':\s*\"([^\"]+)\"",
+            ]
+            for pattern in color_patterns:
+                color_matches = re.findall(pattern, product_text)
+                attribute_values.extend([val.lower() for val in color_matches])
+            
+            # Extract size values
+            size_patterns = [
+                r"'Size'[^}]*'TextValue':\s*'([^']+)'",
+                r'"Size"[^}]*"TextValue":\s*"([^"]+)"',
+                r"'Size'[^}]*'TextValue':\s*\"([^\"]+)\"",
+            ]
+            for pattern in size_patterns:
+                size_matches = re.findall(pattern, product_text)
+                for size_val in size_matches:
+                    # Split pipe-separated sizes
+                    sizes = [s.strip().lower() for s in size_val.split('|') if s.strip()]
+                    attribute_values.extend(sizes)
+                
+        except Exception:
+            pass
+        
+        # Check if any words from question match extracted attribute values
+        question_words = re.findall(r'\b\w+\b', question_lower)
+        for word in question_words:
+            if len(word) > 2:  # Ignore very short words
+                # Debug: uncomment to see what's being compared
+                if 'trinidad' in word or 'ice' in word or 'gloves' in question_lower:
+                    print(f"DEBUG: Question '{question}' word '{word}' against attributes: {attribute_values}")
+                    if not attribute_values:  # If no attributes found, print sample of product text
+                        print(f"DEBUG: Sample product text: {product_text[:500]}")
+                
+                # Direct match in attribute values
+                if word in attribute_values:
+                    return 3  # Perfect attribute match
+                
+                # Partial match for compound colors like "trinidad-ice"
+                for attr_val in attribute_values:
+                    if word in attr_val or attr_val in word:
+                        return 3
+                        
+                # Check for size queries (m, l, xl, etc.)
+                if word in ['small', 's', 'medium', 'm', 'large', 'l', 'xl', 'xxl', 'xxxl', 'xs']:
+                    size_variants = {
+                        'small': ['s', 'small'],
+                        's': ['s', 'small'],
+                        'medium': ['m', 'medium'],
+                        'm': ['m', 'medium'],
+                        'large': ['l', 'large'],
+                        'l': ['l', 'large'],
+                        'xl': ['xl', 'extra large'],
+                        'xxl': ['xxl'],
+                        'xxxl': ['xxxl'],
+                        'xs': ['xs', 'extra small']
+                    }
+                    if word in size_variants:
+                        for size_var in size_variants[word]:
+                            if size_var in attribute_values:
+                                return 3
+        
+        # Also check for category relevance
+        category_score = self._score_category_agentic(question, product_text, product_text.split()[0] if product_text else "")
+        return min(category_score, 1)  # Some relevance but not attribute specific
+    
+    def _score_description_agentic(self, question: str, product_text: str, product_name: str) -> int:
+        """Score description-based matches"""
+        # Extract key descriptive words from question
+        descriptive_keywords = {
+            'warm': ['warm', 'warmth', 'insulation', 'thermal'],
+            'waterproof': ['waterproof', 'water-resistant', 'dry'],
+            'lightweight': ['lightweight', 'light', 'packable'],
+            'durable': ['durable', 'strong', 'tough'],
+            'comfortable': ['comfortable', 'comfort', 'soft'],
+            'breathable': ['breathable', 'ventilation'],
+            'outdoor': ['outdoor', 'hiking', 'climbing', 'adventure'],
+        }
+        
+        question_lower = question.lower()
+        match_count = 0
+        
+        for concept, keywords in descriptive_keywords.items():
+            if any(keyword in question_lower for keyword in keywords):
+                if any(keyword in product_text for keyword in keywords):
+                    match_count += 1
+        
+        if match_count >= 2:
+            return 3  # Multiple concept matches
+        elif match_count == 1:
+            return 2  # Single concept match
+        
+        # Fallback to general matching
+        return self._score_general_agentic(question, product_text, product_name)
+    
+    def _score_general_agentic(self, question: str, product_text: str, product_name: str) -> int:
+        """General relevance scoring"""
+        question_words = set(question.lower().split())
+        product_words = set(product_text.split())
+        
+        # Remove common stop words
+        stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were'}
+        question_words = question_words - stop_words
+        product_words = product_words - stop_words
+        
+        if not question_words:
+            return 0
+            
+        # Calculate word overlap
+        overlap = len(question_words & product_words)
+        overlap_ratio = overlap / len(question_words)
+        
+        if overlap_ratio >= 0.5:
+            return 3
+        elif overlap_ratio >= 0.3:
+            return 2
+        elif overlap_ratio >= 0.1:
+            return 1
+            
+        return 0
     
     def _extract_retry_after_time(self, result: Dict) -> int:
         """Extract retry-after time from throttled request"""
@@ -618,6 +974,12 @@ class AgenticSearchAnalyzer:
         
         for result in search_results:
             test_context = result.get('test_case_context', {})
+            query_metadata = result.get('query_metadata', {})
+            
+            # Use query_metadata if test_case_context is empty
+            if not test_context and query_metadata:
+                test_context = query_metadata
+            
             q_type = test_context.get('question_type', 'Unknown')
             category = test_context.get('original_product_category', 'Unknown')
             
@@ -642,6 +1004,12 @@ class AgenticSearchAnalyzer:
         
         for result in search_results:
             test_context = result.get('test_case_context', {})
+            query_metadata = result.get('query_metadata', {})
+            
+            # Use query_metadata if test_case_context is empty
+            if not test_context and query_metadata:
+                test_context = query_metadata
+            
             q_type = test_context.get('question_type', 'Unknown')
             category = test_context.get('original_product_category', 'Unknown')
             
