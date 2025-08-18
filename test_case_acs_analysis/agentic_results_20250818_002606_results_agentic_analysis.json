@@ -334,7 +334,7 @@
     }
   },
   "analysis_metadata": {
-    "generated_at": "2025-08-18T11:25:06.464927",
+    "generated_at": "2025-08-18T11:28:58.106696",
     "analysis_type": "agentic_search_evaluation_with_improved_relevance",
     "relevance_scoring": "question_type_specific",
     "search_api_type": "agentic_search_api",
