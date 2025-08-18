@@ -1,0 +1,281 @@
+{
+  "file_info": {
+    "file_path": "test_case_analysis/dataverse_results_20250815_014501_results.jsonl",
+    "file_size_mb": 39.47,
+    "total_lines": 3394,
+    "valid_results": 3394,
+    "parsing_success_rate": 100.0
+  },
+  "search_performance": {
+    "total_searches": 3394,
+    "successful_searches": 2950,
+    "failed_searches": 444,
+    "success_rate": 86.9180907483795,
+    "avg_response_time_ms": 27033.175493663523,
+    "median_response_time_ms": 25194.06831264496,
+    "p95_response_time_ms": 60012.5629901886,
+    "p99_response_time_ms": 60107.749700546265,
+    "min_response_time_ms": 732.743501663208,
+    "max_response_time_ms": 90107.24925994873,
+    "status_code_distribution": {
+      "200": 2950
+    }
+  },
+  "relevance_metrics": {
+    "precision_at_k": {
+      "P@1": 0.7680070702607159,
+      "P@3": 0.7697009868905582,
+      "P@5": 0.7681175430844013,
+      "P@10": 0.7713521172204336
+    },
+    "recall_at_k": {
+      "R@1": 0.34225968343488355,
+      "R@3": 0.502319328507324,
+      "R@5": 0.6060886465338794,
+      "R@10": 0.7569542648088611
+    },
+    "f1_score_at_k": {
+      "F1@1": 0.3929624301428957,
+      "F1@3": 0.5543580120688476,
+      "F1@5": 0.6410673089785784,
+      "F1@10": 0.7445860950034021
+    },
+    "ndcg_at_k": {
+      "NDCG@1": 0.8643393725143614,
+      "NDCG@3": 0.8764571528482327,
+      "NDCG@5": 0.8818772682363143,
+      "NDCG@10": 0.8934032447611656
+    },
+    "map_score": 0.7869277016975343,
+    "mrr_score": 0.7963476884157397,
+    "relevance_analysis": {
+      "total_queries_analyzed": 2950,
+      "total_relevant_items_found": 13209,
+      "exact_name_matches": 4656,
+      "average_relevance_per_query": 3.891868002357101
+    },
+    "question_type_breakdown": {
+      "Category + Attribute value": {
+        "precision_at_k": {
+          "P@1": 0.7014563106796117,
+          "P@3": 0.6925566343042071,
+          "P@5": 0.6843851132686084,
+          "P@10": 0.6880817537370936
+        },
+        "recall_at_k": {
+          "R@1": 0.24419729397044132,
+          "R@3": 0.4452008681246791,
+          "R@5": 0.5596887314432362,
+          "R@10": 0.6983041540578907
+        },
+        "f1_score_at_k": {
+          "F1@1": 0.3055396261781191,
+          "F1@3": 0.48929282820245135,
+          "F1@5": 0.5747465431317484,
+          "F1@10": 0.6686834603230271
+        },
+        "ndcg_at_k": {
+          "NDCG@1": 0.9526699029126213,
+          "NDCG@3": 0.9609721543245885,
+          "NDCG@5": 0.9641241227883625,
+          "NDCG@10": 0.9756889751161711
+        },
+        "map_score": 0.71546506163407,
+        "mrr_score": 0.7391585760517799,
+        "query_count": 412,
+        "relevance_analysis": {
+          "total_queries_analyzed": 412,
+          "total_relevant_items_found": 2521,
+          "exact_name_matches": 67,
+          "average_relevance_per_query": 6.118932038834951
+        }
+      },
+      "Exact word": {
+        "precision_at_k": {
+          "P@1": 0.6379310344827587,
+          "P@3": 0.6379310344827587,
+          "P@5": 0.6379310344827587,
+          "P@10": 0.6385057471264368
+        },
+        "recall_at_k": {
+          "R@1": 0.6379310344827587,
+          "R@3": 0.6379310344827587,
+          "R@5": 0.6379310344827587,
+          "R@10": 0.6413793103448275
+        },
+        "f1_score_at_k": {
+          "F1@1": 0.6379310344827587,
+          "F1@3": 0.6379310344827587,
+          "F1@5": 0.6379310344827587,
+          "F1@10": 0.6389162561576355
+        },
+        "ndcg_at_k": {
+          "NDCG@1": 0.7948275862068965,
+          "NDCG@3": 0.7982098853266042,
+          "NDCG@5": 0.8066119987227217,
+          "NDCG@10": 0.8118150696532056
+        },
+        "map_score": 0.6385057471264368,
+        "mrr_score": 0.6385057471264368,
+        "query_count": 290,
+        "relevance_analysis": {
+          "total_queries_analyzed": 290,
+          "total_relevant_items_found": 186,
+          "exact_name_matches": 0,
+          "average_relevance_per_query": 0.6413793103448275
+        }
+      },
+      "Category": {
+        "precision_at_k": {
+          "P@1": 1.0,
+          "P@3": 1.0,
+          "P@5": 1.0,
+          "P@10": 1.0
+        },
+        "recall_at_k": {
+          "R@1": 0.5597122686218431,
+          "R@3": 0.6880020540924796,
+          "R@5": 0.7908781279791918,
+          "R@10": 0.9478417563523946
+        },
+        "f1_score_at_k": {
+          "F1@1": 0.6077064462787212,
+          "F1@3": 0.7592609704216485,
+          "F1@5": 0.8537831344671031,
+          "F1@10": 0.9663670844521909
+        },
+        "ndcg_at_k": {
+          "NDCG@1": 1.0,
+          "NDCG@3": 1.0,
+          "NDCG@5": 1.0,
+          "NDCG@10": 1.0
+        },
+        "map_score": 1.0,
+        "mrr_score": 1.0,
+        "query_count": 564,
+        "relevance_analysis": {
+          "total_queries_analyzed": 564,
+          "total_relevant_items_found": 3221,
+          "exact_name_matches": 0,
+          "average_relevance_per_query": 5.710992907801418
+        }
+      },
+      "Description": {
+        "precision_at_k": {
+          "P@1": 0.6594202898550725,
+          "P@3": 0.6751207729468599,
+          "P@5": 0.6746074879227053,
+          "P@10": 0.6829199735449736
+        },
+        "recall_at_k": {
+          "R@1": 0.15741136279179757,
+          "R@3": 0.39337864430255737,
+          "R@5": 0.532808083623301,
+          "R@10": 0.7434236958693481
+        },
+        "f1_score_at_k": {
+          "F1@1": 0.2228864379439827,
+          "F1@3": 0.4441070123436196,
+          "F1@5": 0.5532560533161219,
+          "F1@10": 0.6857603730409919
+        },
+        "ndcg_at_k": {
+          "NDCG@1": 0.6618357487922706,
+          "NDCG@3": 0.696053588691189,
+          "NDCG@5": 0.7084524594454081,
+          "NDCG@10": 0.7339376713357294
+        },
+        "map_score": 0.7054205467173316,
+        "mrr_score": 0.7193507679920723,
+        "query_count": 552,
+        "relevance_analysis": {
+          "total_queries_analyzed": 552,
+          "total_relevant_items_found": 3190,
+          "exact_name_matches": 1848,
+          "average_relevance_per_query": 5.778985507246377
+        }
+      },
+      "Category + Price range": {
+        "precision_at_k": {
+          "P@1": 0.755056179775281,
+          "P@3": 0.7524344569288389,
+          "P@5": 0.7525842696629214,
+          "P@10": 0.7549250936329588
+        },
+        "recall_at_k": {
+          "R@1": 0.1940574982775908,
+          "R@3": 0.3666240732169351,
+          "R@5": 0.48499218744096473,
+          "R@10": 0.6614237282875749
+        },
+        "f1_score_at_k": {
+          "F1@1": 0.25306045838586694,
+          "F1@3": 0.43719837744023465,
+          "F1@5": 0.543839809389432,
+          "F1@10": 0.6756051045038978
+        },
+        "ndcg_at_k": {
+          "NDCG@1": 0.9071161048689138,
+          "NDCG@3": 0.9164035092394799,
+          "NDCG@5": 0.9201929936775717,
+          "NDCG@10": 0.9330960008312428
+        },
+        "map_score": 0.7808696069520216,
+        "mrr_score": 0.7895577414678538,
+        "query_count": 445,
+        "relevance_analysis": {
+          "total_queries_analyzed": 445,
+          "total_relevant_items_found": 4091,
+          "exact_name_matches": 2741,
+          "average_relevance_per_query": 9.193258426966292
+        }
+      }
+    }
+  },
+  "coverage_metrics": {
+    "total_results_returned": 21904,
+    "avg_results_per_query": 6.4537418974661165,
+    "median_results_per_query": 1.0,
+    "zero_results_count": 1131,
+    "zero_results_rate": 33.32351208014143,
+    "max_results_single_query": 383,
+    "min_results_single_query": 0
+  },
+  "detailed_analysis": {
+    "question_type_distribution": {
+      "Category + Attribute value": 674,
+      "Exact word": 684,
+      "Category": 681,
+      "Description": 680,
+      "Category + Price range": 675
+    },
+    "product_category_distribution": {
+      "gloves": 208,
+      "clothing": 758,
+      "shorts_pants": 241,
+      "tent": 199,
+      "footwear": 476,
+      "accessory": 453,
+      "bike": 295,
+      "backpack": 273,
+      "sleeping": 100,
+      "hat": 266,
+      "helmet": 125
+    }
+  },
+  "analysis_metadata": {
+    "generated_at": "2025-08-15T02:19:51.657551",
+    "analysis_type": "enhanced_search_evaluation_with_improved_relevance",
+    "relevance_scoring": "question_type_specific",
+    "metrics_included": [
+      "precision_at_k",
+      "recall_at_k",
+      "f1_score_at_k",
+      "map_score",
+      "ndcg_at_k",
+      "mrr_score",
+      "response_times",
+      "coverage_metrics"
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "metadata": {
+    "script_version": "multi_thread_agentic_search.py",
+    "completion_timestamp": "2025-08-15T03:11:20.105952",
+    "execution_mode": "agentic_search_api",
+    "total_execution_time_seconds": 1106.0028908252716
+  },
+  "final_statistics": {
+    "total_questions": 9600,
+    "successful_requests": 9600,
+    "failed_requests": 0,
+    "success_rate_percentage": 100.0,
+    "processing_time_seconds": 1106.0028908252716,
+    "processing_rate_per_second": 8.679904980028326,
+    "average_response_time_seconds": 5.746861693983277,
+    "min_response_time_seconds": 1.8563358783721924,
+    "max_response_time_seconds": 14.921852111816406,
+    "status_code_distribution": {
+      "200": 9600
+    },
+    "error_type_distribution": {},
+    "average_results_per_query": 0.0,
+    "total_results_returned": 0
+  },
+  "summary": {
+    "questions_processed": 9600,
+    "success_rate": 100.0,
+    "average_response_time": 5.746861693983277,
+    "total_results_found": 0
+  }
+}

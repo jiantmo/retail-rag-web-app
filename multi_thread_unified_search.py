@@ -96,10 +96,10 @@ def get_system_hardware_config():
         }
 
 def calculate_optimal_thread_config(system_config, total_questions):
-    """Calculate optimal thread count - simplified to use fixed 50 threads for server stability"""
+    """Calculate optimal thread count - default to 50 threads for stability"""
     
-    # Fixed thread count based on observed server capacity limits
-    # The API server gets 504 Gateway Timeout errors with higher concurrency
+    # Default thread count optimized for server stability and consistent performance
+    # 50 threads provides good balance between speed and server load
     optimal_threads = 50
     
     # Small delay to prevent overwhelming the server
@@ -109,10 +109,10 @@ def calculate_optimal_thread_config(system_config, total_questions):
         "recommended_threads": optimal_threads,
         "recommended_delay": delay,
         "reasoning": {
-            "strategy": "Fixed 50 threads for server stability and consistent performance",
+            "strategy": "Default 50 threads for balanced performance and stability",
             "thread_count": optimal_threads,
             "delay_ms": int(delay * 1000),
-            "rationale": "Server experiences 504 Gateway Timeout with higher concurrency"
+            "rationale": "50 threads provides optimal balance between speed and server stability"
         }
     }
 
@@ -272,28 +272,30 @@ class ProgressTracker:
             print(f"❌ Error initializing output file: {e}")
     
     def append_result(self, result):
-        """Append a single result to the file immediately using append mode"""
+        """Append a single result to the file immediately using append mode with thread safety"""
         if not self.output_file:
             return
             
-        try:
-            # Use append mode and write one result per line as JSONL format
-            result_file = self.output_file.replace('.json', '_results.jsonl')
-            with open(result_file, 'a', encoding='utf-8') as f:
-                json.dump(result, f, ensure_ascii=False)
-                f.write('\n')
-                f.flush()
-            
-            self.results_written += 1
-            
-            # Check if we need to save a checkpoint
-            current_time = time.time()
-            if current_time - self.last_checkpoint_time >= self.checkpoint_interval:
-                self._save_checkpoint()
-                self.last_checkpoint_time = current_time
+        # Use lock to ensure thread-safe file writing
+        with self.lock:
+            try:
+                # Use append mode and write one result per line as JSONL format
+                result_file = self.output_file.replace('.json', '_results.jsonl')
+                with open(result_file, 'a', encoding='utf-8') as f:
+                    json.dump(result, f, ensure_ascii=False)
+                    f.write('\n')
+                    f.flush()
                 
-        except Exception as e:
-            print(f"❌ Error appending result: {e}")
+                self.results_written += 1
+                
+                # Check if we need to save a checkpoint
+                current_time = time.time()
+                if current_time - self.last_checkpoint_time >= self.checkpoint_interval:
+                    self._save_checkpoint()
+                    self.last_checkpoint_time = current_time
+                    
+            except Exception as e:
+                print(f"❌ Error appending result: {e}")
     
     def _save_checkpoint(self):
         """Save current progress as a checkpoint"""
@@ -1595,18 +1597,18 @@ def main():
         print(f"   Rationale: {optimal_config['reasoning']['rationale']}")
         print(f"   Using: {workers} workers, {delay}s delay")
     else:
-        # Use manual values if specified, otherwise use fixed 50 threads
+        # Use manual values if specified, otherwise use default 50 threads
         if args.workers is not None or args.delay is not None:
             # User specified some manual values
             workers = args.workers if args.workers is not None else 50
             delay = args.delay if args.delay is not None else 0.1
             print(f"⚙️  Manual Configuration: {workers} workers, {delay}s delay")
         else:
-            # No manual values specified, use fixed 50 threads
+            # No manual values specified, use default 50 threads
             workers = 50
             delay = 0.1
             print(f"⚙️  Default Configuration: {workers} workers, {delay}s delay")
-            print(f"   Optimized for server stability and consistent performance")
+            print(f"   Optimized for balanced performance and server stability")
     
     print("\n🚀 Multi-threaded Dataverse Search Runner")
     print("=" * 60)

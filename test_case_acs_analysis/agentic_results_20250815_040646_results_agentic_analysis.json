@@ -1,0 +1,360 @@
+{
+  "file_info": {
+    "file_path": "test_case_acs_analysis\\agentic_results_20250815_040646_results.jsonl",
+    "file_size_mb": 0.31,
+    "total_lines": 25,
+    "valid_results": 25,
+    "parsing_success_rate": 100.0
+  },
+  "search_performance": {
+    "total_searches": 25,
+    "api_successful_calls": 25,
+    "search_execution_successful": 5,
+    "throttled_requests": 20,
+    "other_errors": 0,
+    "api_failed_calls": 0,
+    "api_success_rate": 100.0,
+    "search_execution_success_rate": 20.0,
+    "throttling_rate": 80.0,
+    "avg_response_time_ms": 4334.217567443848,
+    "median_response_time_ms": 4760.797500610352,
+    "p95_response_time_ms": 5003.518581390381,
+    "p99_response_time_ms": 5046.641111373901,
+    "min_response_time_ms": 1756.5889358520508,
+    "max_response_time_ms": 5046.641111373901,
+    "status_code_distribution": {
+      "200": 25
+    },
+    "error_analysis": {
+      "throttled_examples": [
+        "Error processing search request: Agentic retrieval failed: TooManyRequests - {\"error\":{\"code\":\"\",\"message\":\"Could not complete model action. The model endpoint returned status code '429' (TooManyReque",
+        "Error processing search request: Agentic retrieval failed: TooManyRequests - {\"error\":{\"code\":\"\",\"message\":\"Could not complete model action. The model endpoint returned status code '429' (TooManyReque",
+        "Error processing search request: Agentic retrieval failed: TooManyRequests - {\"error\":{\"code\":\"\",\"message\":\"Could not complete model action. The model endpoint returned status code '429' (TooManyReque"
+      ],
+      "other_error_examples": []
+    }
+  },
+  "relevance_metrics": {
+    "precision_at_k": {
+      "P@1": 0.8,
+      "P@3": 0.6,
+      "P@5": 0.52,
+      "P@10": 0.48
+    },
+    "recall_at_k": {
+      "R@1": 0.2796703296703297,
+      "R@3": 0.389010989010989,
+      "R@5": 0.44835164835164837,
+      "R@10": 0.6467032967032967
+    },
+    "f1_score_at_k": {
+      "F1@1": 0.3352380952380952,
+      "F1@3": 0.35987394957983193,
+      "F1@5": 0.3719298245614035,
+      "F1@10": 0.4626576322228496
+    },
+    "ndcg_at_k": {
+      "NDCG@1": 0.8,
+      "NDCG@3": 0.7605224118712179,
+      "NDCG@5": 0.7473910066932645,
+      "NDCG@10": 0.7708113886474148
+    },
+    "map_score": 0.7265151515151516,
+    "mrr_score": 0.8,
+    "relevance_analysis": {
+      "total_queries_for_relevance_calculation": 5,
+      "total_api_calls_made": 25,
+      "throttled_requests_excluded": 20,
+      "other_errors_excluded": 0,
+      "total_relevant_items_found": 32,
+      "exact_name_matches": 4,
+      "total_product_items_extracted": 65,
+      "average_relevance_per_successful_query": 6.4,
+      "average_products_per_successful_query": 13.0,
+      "exclusion_summary": {
+        "excluded_for_throttling": 20,
+        "excluded_for_other_errors": 0,
+        "included_in_relevance_metrics": 5,
+        "exclusion_rate": 80.0
+      }
+    },
+    "question_type_breakdown": {
+      "Category": {
+        "precision_at_k": {
+          "P@1": 1.0,
+          "P@3": 1.0,
+          "P@5": 1.0,
+          "P@10": 1.0
+        },
+        "recall_at_k": {
+          "R@1": 0.07142857142857142,
+          "R@3": 0.21428571428571427,
+          "R@5": 0.35714285714285715,
+          "R@10": 0.7142857142857143
+        },
+        "f1_score_at_k": {
+          "F1@1": 0.13333333333333333,
+          "F1@3": 0.35294117647058826,
+          "F1@5": 0.5263157894736842,
+          "F1@10": 0.8333333333333333
+        },
+        "ndcg_at_k": {
+          "NDCG@1": 1.0,
+          "NDCG@3": 1.0,
+          "NDCG@5": 1.0,
+          "NDCG@10": 1.0
+        },
+        "map_score": 1.0,
+        "mrr_score": 1.0,
+        "query_count": 1,
+        "relevance_analysis": {
+          "total_queries_analyzed": 1,
+          "total_relevant_items_found": 14,
+          "exact_name_matches": 0,
+          "average_relevance_per_query": 14.0
+        }
+      },
+      "Category + Price range": {
+        "precision_at_k": {
+          "P@1": 1.0,
+          "P@3": 0.6666666666666666,
+          "P@5": 0.4,
+          "P@10": 0.3
+        },
+        "recall_at_k": {
+          "R@1": 0.25,
+          "R@3": 0.5,
+          "R@5": 0.5,
+          "R@10": 0.75
+        },
+        "f1_score_at_k": {
+          "F1@1": 0.4,
+          "F1@3": 0.5714285714285715,
+          "F1@5": 0.4444444444444445,
+          "F1@10": 0.4285714285714285
+        },
+        "ndcg_at_k": {
+          "NDCG@1": 1.0,
+          "NDCG@3": 0.8026120593560899,
+          "NDCG@5": 0.7369550334663224,
+          "NDCG@10": 0.8540569432370743
+        },
+        "map_score": 0.6325757575757576,
+        "mrr_score": 1.0,
+        "query_count": 1,
+        "relevance_analysis": {
+          "total_queries_analyzed": 1,
+          "total_relevant_items_found": 4,
+          "exact_name_matches": 4,
+          "average_relevance_per_query": 4.0
+        }
+      },
+      "Category + Attribute value": {
+        "precision_at_k": {
+          "P@1": 1.0,
+          "P@3": 1.0,
+          "P@5": 1.0,
+          "P@10": 1.0
+        },
+        "recall_at_k": {
+          "R@1": 0.07692307692307693,
+          "R@3": 0.23076923076923078,
+          "R@5": 0.38461538461538464,
+          "R@10": 0.7692307692307693
+        },
+        "f1_score_at_k": {
+          "F1@1": 0.14285714285714288,
+          "F1@3": 0.375,
+          "F1@5": 0.5555555555555556,
+          "F1@10": 0.8695652173913044
+        },
+        "ndcg_at_k": {
+          "NDCG@1": 1.0,
+          "NDCG@3": 1.0,
+          "NDCG@5": 1.0,
+          "NDCG@10": 1.0
+        },
+        "map_score": 1.0,
+        "mrr_score": 1.0,
+        "query_count": 1,
+        "relevance_analysis": {
+          "total_queries_analyzed": 1,
+          "total_relevant_items_found": 13,
+          "exact_name_matches": 0,
+          "average_relevance_per_query": 13.0
+        }
+      },
+      "Description": {
+        "precision_at_k": {
+          "P@1": 1.0,
+          "P@3": 0.3333333333333333,
+          "P@5": 0.2,
+          "P@10": 0.1
+        },
+        "recall_at_k": {
+          "R@1": 1.0,
+          "R@3": 1.0,
+          "R@5": 1.0,
+          "R@10": 1.0
+        },
+        "f1_score_at_k": {
+          "F1@1": 1.0,
+          "F1@3": 0.5,
+          "F1@5": 0.33333333333333337,
+          "F1@10": 0.18181818181818182
+        },
+        "ndcg_at_k": {
+          "NDCG@1": 1.0,
+          "NDCG@3": 1.0,
+          "NDCG@5": 1.0,
+          "NDCG@10": 1.0
+        },
+        "map_score": 1.0,
+        "mrr_score": 1.0,
+        "query_count": 1,
+        "relevance_analysis": {
+          "total_queries_analyzed": 1,
+          "total_relevant_items_found": 1,
+          "exact_name_matches": 0,
+          "average_relevance_per_query": 1.0
+        }
+      },
+      "Exact word": {
+        "precision_at_k": {
+          "P@1": 0.0,
+          "P@3": 0.0,
+          "P@5": 0.0,
+          "P@10": 0.0
+        },
+        "recall_at_k": {
+          "R@1": 0.0,
+          "R@3": 0.0,
+          "R@5": 0.0,
+          "R@10": 0.0
+        },
+        "f1_score_at_k": {
+          "F1@1": 0.0,
+          "F1@3": 0.0,
+          "F1@5": 0.0,
+          "F1@10": 0.0
+        },
+        "ndcg_at_k": {
+          "NDCG@1": 0.0,
+          "NDCG@3": 0.0,
+          "NDCG@5": 0.0,
+          "NDCG@10": 0.0
+        },
+        "map_score": 0.0,
+        "mrr_score": 0.0,
+        "query_count": 1,
+        "relevance_analysis": {
+          "total_queries_analyzed": 1,
+          "total_relevant_items_found": 0,
+          "exact_name_matches": 0,
+          "average_relevance_per_query": 0.0
+        }
+      }
+    }
+  },
+  "coverage_metrics": {
+    "total_products_returned": 65,
+    "avg_products_per_query": 13,
+    "avg_products_per_successful_query": 13,
+    "median_products_per_query": 13,
+    "zero_results_count": 20,
+    "zero_results_rate": 80.0,
+    "successful_executions": 5,
+    "successful_execution_rate": 20.0,
+    "max_products_single_query": 14,
+    "min_products_single_query": 11
+  },
+  "detailed_analysis": {
+    "question_type_distribution": {
+      "Category": 5,
+      "Exact word": 5,
+      "Category + Price range": 5,
+      "Category + Attribute value": 5,
+      "Description": 5
+    },
+    "product_category_distribution": {
+      "clothing": 5,
+      "tent": 5,
+      "footwear": 5,
+      "gloves": 5,
+      "bike": 5
+    }
+  },
+  "throttling_summary": {
+    "total_requests": 25,
+    "successful_executions": 5,
+    "throttled_requests": 20,
+    "other_errors": 0,
+    "api_failures": 0,
+    "throttling_rate": 80.0,
+    "success_rate": 20.0,
+    "throttling_by_question_type": {
+      "Category": 4,
+      "Exact word": 4,
+      "Category + Price range": 4,
+      "Category + Attribute value": 4,
+      "Description": 4
+    },
+    "throttling_by_category": {
+      "clothing": 5,
+      "tent": 1,
+      "footwear": 4,
+      "gloves": 5,
+      "bike": 5
+    },
+    "retry_after_analysis": {
+      "retry_times_found": 20,
+      "avg_retry_after_seconds": 27.6,
+      "max_retry_after_seconds": 52,
+      "min_retry_after_seconds": 1
+    },
+    "relevance_calculation_impact": {
+      "requests_excluded_from_relevance": 20,
+      "requests_included_in_relevance": 5,
+      "exclusion_percentage": 80.0
+    }
+  },
+  "agentic_specific_metrics": {
+    "successful_executions_analyzed": 5,
+    "activity_metrics": {
+      "total_ai_planning_operations": 0,
+      "avg_search_operations_per_query": 0,
+      "avg_total_steps_per_query": 0,
+      "search_operations_distribution": {}
+    },
+    "token_usage": {
+      "avg_planning_input_tokens": 0,
+      "avg_planning_output_tokens": 0,
+      "total_planning_input_tokens": 0,
+      "total_planning_output_tokens": 0
+    },
+    "knowledge_base_usage": {
+      "avg_documents_referenced": 0,
+      "max_documents_referenced": 0,
+      "min_documents_referenced": 0,
+      "references_distribution": {}
+    }
+  },
+  "analysis_metadata": {
+    "generated_at": "2025-08-15T04:11:04.641938",
+    "analysis_type": "agentic_search_evaluation_with_improved_relevance",
+    "relevance_scoring": "question_type_specific",
+    "search_api_type": "agentic_search_api",
+    "response_format": "formatted_text_with_ref_ids",
+    "metrics_included": [
+      "precision_at_k",
+      "recall_at_k",
+      "f1_score_at_k",
+      "map_score",
+      "ndcg_at_k",
+      "mrr_score",
+      "response_times",
+      "coverage_metrics",
+      "agentic_activity_metrics"
+    ]
+  }
+}

@@ -1,0 +1,129 @@
+{
+  "file_info": {
+    "file_path": "test_case_analysis/dataverse_results_20250806_152550_results.jsonl",
+    "file_size_mb": 73.19,
+    "total_lines": 13185,
+    "valid_results": 13185,
+    "parsing_success_rate": 100.0
+  },
+  "search_performance": {
+    "total_searches": 13185,
+    "successful_searches": 8690,
+    "failed_searches": 4495,
+    "success_rate": 65.90822904816079,
+    "avg_response_time_ms": 5641.5519790663875,
+    "median_response_time_ms": 3922.2488403320312,
+    "p95_response_time_ms": 17212.307691574097,
+    "p99_response_time_ms": 36918.67232322693,
+    "min_response_time_ms": 411.53478622436523,
+    "max_response_time_ms": 60321.93112373352,
+    "status_code_distribution": {
+      "200": 8690,
+      "500": 1,
+      "504": 50
+    }
+  },
+  "relevance_metrics": {
+    "precision_at_k": {
+      "P@1": 0.0,
+      "P@3": 0.0,
+      "P@5": 0.0,
+      "P@10": 0.0
+    },
+    "recall_at_k": {
+      "R@1": 0.0,
+      "R@3": 0.0,
+      "R@5": 0.0,
+      "R@10": 0.0
+    },
+    "f1_score_at_k": {
+      "F1@1": 0.0,
+      "F1@3": 0.0,
+      "F1@5": 0.0,
+      "F1@10": 0.0
+    },
+    "ndcg_at_k": {
+      "NDCG@1": 0.0,
+      "NDCG@3": 0.0,
+      "NDCG@5": 0.0,
+      "NDCG@10": 0.0
+    },
+    "map_score": 0.0,
+    "mrr_score": 0.0,
+    "relevance_analysis": {
+      "total_queries_analyzed": 8690,
+      "total_relevant_items_found": 0,
+      "exact_name_matches": 0,
+      "average_relevance_per_query": 0.0
+    },
+    "question_type_breakdown": {
+      "Unknown": {
+        "precision_at_k": {
+          "P@1": 0.0,
+          "P@3": 0.0,
+          "P@5": 0.0,
+          "P@10": 0.0
+        },
+        "recall_at_k": {
+          "R@1": 0.0,
+          "R@3": 0.0,
+          "R@5": 0.0,
+          "R@10": 0.0
+        },
+        "f1_score_at_k": {
+          "F1@1": 0.0,
+          "F1@3": 0.0,
+          "F1@5": 0.0,
+          "F1@10": 0.0
+        },
+        "ndcg_at_k": {
+          "NDCG@1": 0.0,
+          "NDCG@3": 0.0,
+          "NDCG@5": 0.0,
+          "NDCG@10": 0.0
+        },
+        "map_score": 0.0,
+        "mrr_score": 0.0,
+        "query_count": 7266,
+        "relevance_analysis": {
+          "total_queries_analyzed": 7266,
+          "total_relevant_items_found": 0,
+          "exact_name_matches": 0,
+          "average_relevance_per_query": 0.0
+        }
+      }
+    }
+  },
+  "coverage_metrics": {
+    "total_results_returned": 82939,
+    "avg_results_per_query": 6.290405764125901,
+    "median_results_per_query": 1,
+    "zero_results_count": 5919,
+    "zero_results_rate": 44.89192263936291,
+    "max_results_single_query": 383,
+    "min_results_single_query": 0
+  },
+  "detailed_analysis": {
+    "question_type_distribution": {
+      "Unknown": 13185
+    },
+    "product_category_distribution": {
+      "Unknown": 13185
+    }
+  },
+  "analysis_metadata": {
+    "generated_at": "2025-08-15T00:29:31.223817",
+    "analysis_type": "enhanced_search_evaluation_with_improved_relevance",
+    "relevance_scoring": "question_type_specific",
+    "metrics_included": [
+      "precision_at_k",
+      "recall_at_k",
+      "f1_score_at_k",
+      "map_score",
+      "ndcg_at_k",
+      "mrr_score",
+      "response_times",
+      "coverage_metrics"
+    ]
+  }
+}
