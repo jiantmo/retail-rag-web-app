@@ -1,0 +1,32 @@
+{
+  "timestamp": "2025-08-18T09:28:20.227581",
+  "progress": {
+    "total_questions": 9600,
+    "completed": 1201,
+    "successful": 1198,
+    "failed": 3,
+    "results_written": 1201
+  },
+  "statistics": {
+    "total_questions": 9600,
+    "successful_requests": 1198,
+    "failed_requests": 3,
+    "success_rate_percentage": 13.481881611523743,
+    "processing_time_seconds": 32533.450103998184,
+    "processing_rate_per_second": 0.03691585110588697,
+    "average_response_time_seconds": 4.869201504519142,
+    "min_response_time_seconds": 0.0020592212677001953,
+    "max_response_time_seconds": 14.160325050354004,
+    "status_code_distribution": {
+      "200": 1198
+    },
+    "error_type_distribution": {
+      "request_error": 3
+    },
+    "throttled_requests": 714,
+    "throttling_rate_percentage": 7.4375,
+    "non_throttled_total": 8886,
+    "average_results_per_query": 0.0,
+    "total_results_returned": 0
+  }
+}

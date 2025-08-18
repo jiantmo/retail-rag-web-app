@@ -118,16 +118,13 @@ class ProgressTracker:
         self.error_types = {}
         self.response_times = []
         self.result_counts = []
+        self.throttled_requests = 0
+        self.throttled_examples = []
         self.output_file = output_file
         self.results_written = 0
         self.last_checkpoint_time = time.time()
         self.checkpoint_interval = 30  # Save checkpoint every 30 seconds
         self.finalized = False  # Track if finalization has been called
-        
-        # Store sample failed/throttled requests for analysis
-        self.failed_request_samples = []
-        self.throttled_request_samples = []
-        self.max_samples = 3  # Store up to 3 samples of each type
         
         # Initialize output file
         if self.output_file:
@@ -155,6 +152,10 @@ class ProgressTracker:
         if not self.output_file:
             return
             
+        # Skip throttled requests (HTTP 429) from being written to results file
+        if result.get("status_code") == 429:
+            return
+            
         # Use lock to ensure thread-safe file writing
         with self.lock:
             try:
@@ -175,62 +176,6 @@ class ProgressTracker:
                     
             except Exception as e:
                 print(f"⚠️ Error writing result to file: {e}")
-    
-    def add_failed_sample(self, result):
-        """Add a sample failed or throttled request for analysis"""
-        with self.lock:
-            # Check if this is a throttled request
-            is_throttled = False
-            try:
-                response_data = result.get('response_data', {})
-                if isinstance(response_data, dict):
-                    formatted_text = response_data.get('FormattedText', '')
-                    if 'TooManyRequests' in formatted_text or 'Rate limit' in formatted_text:
-                        is_throttled = True
-            except:
-                pass
-            
-            # Store sample based on type
-            if is_throttled and len(self.throttled_request_samples) < self.max_samples:
-                sample = {
-                    'timestamp': result.get('timestamp'),
-                    'error_type': 'throttled',
-                    'status_code': result.get('status_code'),
-                    'response_time': result.get('response_time_seconds'),
-                    'error_message': self._extract_error_message(result),
-                    'question': result.get('test_case_context', {}).get('question', 'Unknown')[:100]
-                }
-                self.throttled_request_samples.append(sample)
-            elif not is_throttled and len(self.failed_request_samples) < self.max_samples:
-                sample = {
-                    'timestamp': result.get('timestamp'),
-                    'error_type': result.get('error_type', 'unknown'),
-                    'status_code': result.get('status_code'),
-                    'response_time': result.get('response_time_seconds'),
-                    'error_message': self._extract_error_message(result),
-                    'question': result.get('test_case_context', {}).get('question', 'Unknown')[:100]
-                }
-                self.failed_request_samples.append(sample)
-    
-    def _extract_error_message(self, result):
-        """Extract error message from result for sampling"""
-        try:
-            response_data = result.get('response_data', {})
-            if isinstance(response_data, dict):
-                # Try FormattedText first
-                formatted_text = response_data.get('FormattedText', '')
-                if formatted_text and 'Error' in formatted_text:
-                    return formatted_text[:200]  # First 200 chars
-                
-                # Try error field
-                error = response_data.get('error', '')
-                if error:
-                    return str(error)[:200]
-            
-            # Fall back to error_type
-            return result.get('error_type', 'No error message available')
-        except:
-            return 'Error extracting error message'
     
     def _save_checkpoint(self):
         """Save current progress as a checkpoint"""
@@ -259,6 +204,30 @@ class ProgressTracker:
         except Exception as e:
             print(f"⚠️ Error saving checkpoint: {e}")
         
+    def is_throttled_request(self, result_data):
+        """Check if the request was throttled/rate limited"""
+        try:
+            response_data = result_data.get('response_data', {})
+            search_result = response_data.get('result', {})
+            formatted_text = search_result.get('FormattedText', '')
+            
+            throttling_patterns = [
+                'TooManyRequests',
+                'Rate limit is exceeded',
+                'status code \'429\'',
+                'rate limit',
+                'too many requests'
+            ]
+            
+            formatted_text_lower = formatted_text.lower()
+            for pattern in throttling_patterns:
+                if pattern.lower() in formatted_text_lower:
+                    return True
+                    
+            return False
+        except Exception:
+            return False
+        
     def finalize_output(self):
         """Finalize the output file with final statistics and consolidate results"""
         if not self.output_file or self.finalized:
@@ -279,11 +248,19 @@ class ProgressTracker:
                     "total_execution_time_seconds": time.time() - self.start_time
                 },
                 "final_statistics": self.get_statistics(),
+                "throttling_summary": {
+                    "throttled_requests": self.throttled_requests,
+                    "throttling_rate": (self.throttled_requests / self.total * 100) if self.total > 0 else 0,
+                    "throttled_examples": self.throttled_examples[:3],
+                    "note": "Throttled requests (HTTP 429) are excluded from analysis results"
+                },
                 "summary": {
                     "questions_processed": self.completed,
-                    "success_rate": (self.successful / self.total * 100) if self.total > 0 else 0,
+                    "questions_analyzed": self.completed - self.throttled_requests,
+                    "success_rate": ((self.successful - self.status_codes.get(429, 0)) / (self.total - self.throttled_requests) * 100) if (self.total - self.throttled_requests) > 0 else 0,
                     "average_response_time": sum(self.response_times) / len(self.response_times) if self.response_times else 0,
-                    "total_results_found": sum(self.result_counts)
+                    "total_results_found": sum(self.result_counts),
+                    "note": "Analysis excludes throttled requests (HTTP 429)"
                 }
             }
             
@@ -302,9 +279,6 @@ class ProgressTracker:
                 self.successful += 1
             else:
                 self.failed += 1
-                # Collect failed request sample for analysis
-                if result_data:
-                    self.add_failed_sample(result_data)
                 
             if status_code is not None:
                 self.status_codes[status_code] = self.status_codes.get(status_code, 0) + 1
@@ -317,24 +291,43 @@ class ProgressTracker:
                 
             self.result_counts.append(result_count)
             
+            # Check for throttling
+            if result_data and self.is_throttled_request(result_data):
+                self.throttled_requests += 1
+                if len(self.throttled_examples) < 3:
+                    # Extract error message for examples
+                    try:
+                        response_data = result_data.get('response_data', {})
+                        search_result = response_data.get('result', {})
+                        formatted_text = search_result.get('FormattedText', '')
+                        self.throttled_examples.append(formatted_text[:200])
+                    except Exception:
+                        self.throttled_examples.append("Error extracting throttle message")
+            
             # Progress update
             if self.completed % 10 == 0 or self.completed == self.total:
                 elapsed = time.time() - self.start_time
                 rate = self.completed / elapsed if elapsed > 0 else 0
+                throttle_rate = (self.throttled_requests / self.completed * 100) if self.completed > 0 else 0
+                non_throttled_successful = self.successful - self.status_codes.get(429, 0)
                 print(f"📊 Progress: {self.completed}/{self.total} ({self.completed/self.total*100:.1f}%) - "
-                      f"Success: {self.successful} - Rate: {rate:.2f} q/s")
+                      f"Success: {non_throttled_successful} - Throttled: {self.throttled_requests} ({throttle_rate:.1f}%) - Rate: {rate:.2f} q/s")
     
     def get_statistics(self):
-        """Get comprehensive statistics"""
+        """Get comprehensive statistics excluding throttled requests"""
         elapsed = time.time() - self.start_time
         avg_response_time = sum(self.response_times) / len(self.response_times) if self.response_times else 0
         avg_result_count = sum(self.result_counts) / len(self.result_counts) if self.result_counts else 0
         
+        # Calculate non-throttled counts for analysis
+        non_throttled_total = self.total - self.throttled_requests
+        non_throttled_successful = self.successful - self.status_codes.get(429, 0)
+        
         return {
             "total_questions": self.total,
-            "successful_requests": self.successful,
-            "failed_requests": self.failed,
-            "success_rate_percentage": (self.successful / self.total * 100) if self.total > 0 else 0,
+            "successful_requests": non_throttled_successful,
+            "failed_requests": self.failed - self.status_codes.get(429, 0),
+            "success_rate_percentage": (non_throttled_successful / non_throttled_total * 100) if non_throttled_total > 0 else 0,
             "processing_time_seconds": elapsed,
             "processing_rate_per_second": self.completed / elapsed if elapsed > 0 else 0,
             "average_response_time_seconds": avg_response_time,
@@ -342,14 +335,11 @@ class ProgressTracker:
             "max_response_time_seconds": max(self.response_times) if self.response_times else 0,
             "status_code_distribution": dict(self.status_codes),
             "error_type_distribution": dict(self.error_types),
+            "throttled_requests": self.throttled_requests,
+            "throttling_rate_percentage": (self.throttled_requests / self.total * 100) if self.total > 0 else 0,
+            "non_throttled_total": non_throttled_total,
             "average_results_per_query": avg_result_count,
-            "total_results_returned": sum(self.result_counts),
-            "error_analysis": {
-                "throttled_request_samples": self.throttled_request_samples,
-                "failed_request_samples": self.failed_request_samples,
-                "total_throttled_samples": len(self.throttled_request_samples),
-                "total_failed_samples": len(self.failed_request_samples)
-            }
+            "total_results_returned": sum(self.result_counts)
         }
 
 class AgenticSearchClient:
@@ -496,9 +486,6 @@ class AgenticSearchClient:
                         "response_time_seconds": response_time,
                         "result_count": len(product_info.get("products_found", [])),
                         "status_code": response.status_code,
-                        "api_response_products": {
-                            "product_names_found": product_info.get("product_names", [])
-                        },
                         "response_data": response_data,
                         "extracted_products": product_info.get("products_found", [])
                     }
@@ -518,9 +505,6 @@ class AgenticSearchClient:
                         "result_count": 0,
                         "status_code": response.status_code,
                         "error_type": f"HTTP_{response.status_code}",
-                        "api_response_products": {
-                            "product_names_found": []
-                        },
                         "response_data": {"error": f"HTTP {response.status_code}", "text": response.text[:500]},
                         "extracted_products": []
                     }
@@ -539,9 +523,6 @@ class AgenticSearchClient:
                     "result_count": 0,
                     "status_code": None,
                     "error_type": "timeout",
-                    "api_response_products": {
-                        "product_names_found": []
-                    },
                     "response_data": {"error": "Request timeout", "query": query_text},
                     "extracted_products": []
                 }
@@ -560,9 +541,6 @@ class AgenticSearchClient:
                     "result_count": 0,
                     "status_code": None,
                     "error_type": "request_error",
-                    "api_response_products": {
-                        "product_names_found": []
-                    },
                     "response_data": {"error": str(e), "query": query_text},
                     "extracted_products": []
                 }
@@ -577,9 +555,6 @@ class AgenticSearchClient:
             "result_count": 0,
             "status_code": None,
             "error_type": "max_retries_exceeded",
-            "api_response_products": {
-                "product_names_found": []
-            },
             "response_data": {"error": "Maximum retry attempts exceeded", "query": query_text},
             "extracted_products": []
         }
@@ -656,13 +631,8 @@ def process_single_question(client, question_data, progress_tracker, delay=0, ma
             # Execute the search
             result = client.search(question_data["question"], retry_count=1)
             
-            # Add test case context to result
-            result["test_case_context"] = {
-                "original_product_name": question_data.get("original_product_name"),
-                "original_product_description": question_data.get("original_product_description"),
-                "original_product_price": question_data.get("original_product_price"),
-                "original_product_attributes": question_data.get("original_product_attributes"),
-                "original_product_category": question_data.get("original_product_category"),
+            # Add minimal test case context (only question and type, no raw product data)
+            result["query_metadata"] = {
                 "question": question_data.get("question"),
                 "question_type": question_data.get("question_type")
             }
@@ -687,17 +657,9 @@ def process_single_question(client, question_data, progress_tracker, delay=0, ma
                     "result_count": 0,
                     "status_code": None,
                     "error_type": "processing_exception",
-                    "api_response_products": {
-                        "product_names_found": []
-                    },
                     "response_data": {"error": str(e), "query": question_data.get("question")},
                     "extracted_products": [],
-                    "test_case_context": {
-                        "original_product_name": question_data.get("original_product_name"),
-                        "original_product_description": question_data.get("original_product_description"),
-                        "original_product_price": question_data.get("original_product_price"),
-                        "original_product_attributes": question_data.get("original_product_attributes"),
-                        "original_product_category": question_data.get("original_product_category"),
+                    "query_metadata": {
                         "question": question_data.get("question"),
                         "question_type": question_data.get("question_type")
                     }
@@ -717,7 +679,7 @@ def process_single_question(client, question_data, progress_tracker, delay=0, ma
         error_type=error_type,
         response_time=response_time,
         result_count=result_count,
-        result_data=last_result  # Pass the full result for sample collection
+        result_data=last_result
     )
     
     # Immediately append result to file
@@ -860,22 +822,6 @@ def main():
         print("\n⚠️ Error Types:")
         for error_type, count in stats['error_type_distribution'].items():
             print(f"   {error_type}: {count}")
-    
-    # Show error analysis samples
-    error_analysis = stats.get('error_analysis', {})
-    if error_analysis.get('throttled_request_samples'):
-        print(f"\n🚫 Throttled Request Examples ({error_analysis['total_throttled_samples']} samples):")
-        for i, sample in enumerate(error_analysis['throttled_request_samples'][:2], 1):
-            print(f"   {i}. [{sample['timestamp']}] {sample['question']}")
-            print(f"      Error: {sample['error_message'][:100]}...")
-            print(f"      Response time: {sample['response_time']:.2f}s")
-    
-    if error_analysis.get('failed_request_samples'):
-        print(f"\n❌ Failed Request Examples ({error_analysis['total_failed_samples']} samples):")
-        for i, sample in enumerate(error_analysis['failed_request_samples'][:2], 1):
-            print(f"   {i}. [{sample['timestamp']}] {sample['question']}")
-            print(f"      Error: {sample['error_message'][:100]}...")
-            print(f"      Type: {sample['error_type']}, Response time: {sample['response_time']:.2f}s")
     
     print("=" * 60)
     
