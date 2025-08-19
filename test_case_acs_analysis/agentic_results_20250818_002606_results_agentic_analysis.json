@@ -1,6 +1,6 @@
 {
   "file_info": {
-    "file_path": "test_case_acs_analysis/agentic_results_20250818_002606_results.jsonl",
+    "file_path": "test_case_acs_analysis\\agentic_results_20250818_002606_results.jsonl",
     "file_size_mb": 29.44,
     "total_lines": 1373,
     "valid_results": 1373,
@@ -38,41 +38,41 @@
   },
   "relevance_metrics": {
     "precision_at_k": {
-      "P@1": 0.4855595667870036,
-      "P@3": 0.4220818291215403,
-      "P@5": 0.3944043321299639,
-      "P@10": 0.3653479743281187
+      "P@1": 0.0,
+      "P@3": 0.0,
+      "P@5": 0.0,
+      "P@10": 0.0
     },
     "recall_at_k": {
-      "R@1": 0.11688261347557376,
-      "R@3": 0.23068050331136974,
-      "R@5": 0.3263189102313651,
-      "R@10": 0.495263405868099
+      "R@1": 0.0,
+      "R@3": 0.0,
+      "R@5": 0.0,
+      "R@10": 0.0
     },
     "f1_score_at_k": {
-      "F1@1": 0.16371766167104881,
-      "F1@3": 0.2613283436822628,
-      "F1@5": 0.31988308643565655,
-      "F1@10": 0.38960123865012286
+      "F1@1": 0.0,
+      "F1@3": 0.0,
+      "F1@5": 0.0,
+      "F1@10": 0.0
     },
     "ndcg_at_k": {
-      "NDCG@1": 0.8637184115523465,
-      "NDCG@3": 0.8475656427573429,
-      "NDCG@5": 0.8460710454493743,
-      "NDCG@10": 0.8721639577120139
+      "NDCG@1": 0.0,
+      "NDCG@3": 0.0,
+      "NDCG@5": 0.0,
+      "NDCG@10": 0.0
     },
-    "map_score": 0.46809556093609395,
-    "mrr_score": 0.5011925799831937,
+    "map_score": 0.0,
+    "mrr_score": 0.0,
     "relevance_analysis": {
       "total_queries_for_relevance_calculation": 554,
       "total_api_calls_made": 1370,
       "throttled_requests_excluded": 815,
       "other_errors_excluded": 1,
-      "total_relevant_items_found": 2032,
-      "exact_name_matches": 1580,
-      "total_product_items_extracted": 6087,
-      "average_relevance_per_successful_query": 3.667870036101083,
-      "average_products_per_successful_query": 10.987364620938628,
+      "total_relevant_items_found": 0,
+      "exact_name_matches": 0,
+      "total_product_items_extracted": 6084,
+      "average_relevance_per_successful_query": 0.0,
+      "average_products_per_successful_query": 10.981949458483754,
       "exclusion_summary": {
         "excluded_for_throttling": 815,
         "excluded_for_other_errors": 1,
@@ -81,42 +81,7 @@
       }
     },
     "question_type_breakdown": {
-      "Exact word": {
-        "precision_at_k": {
-          "P@1": 0.6601941747572816,
-          "P@3": 0.41909385113268605,
-          "P@5": 0.3466019417475728,
-          "P@10": 0.2860032362459547
-        },
-        "recall_at_k": {
-          "R@1": 0.2888156880875328,
-          "R@3": 0.4004045307443366,
-          "R@5": 0.4842502696871629,
-          "R@10": 0.6285868392664509
-        },
-        "f1_score_at_k": {
-          "F1@1": 0.3517647401142547,
-          "F1@3": 0.3488950607739871,
-          "F1@5": 0.35109344885112115,
-          "F1@10": 0.3561196168044886
-        },
-        "ndcg_at_k": {
-          "NDCG@1": 0.941747572815534,
-          "NDCG@3": 0.848690884942154,
-          "NDCG@5": 0.8345124493198823,
-          "NDCG@10": 0.8954443338072924
-        },
-        "map_score": 0.5650157357496701,
-        "mrr_score": 0.6601941747572816,
-        "query_count": 103,
-        "relevance_analysis": {
-          "total_queries_analyzed": 103,
-          "total_relevant_items_found": 295,
-          "exact_name_matches": 55,
-          "average_relevance_per_query": 2.8640776699029127
-        }
-      },
-      "Category": {
+      "Unknown": {
         "precision_at_k": {
           "P@1": 0.0,
           "P@3": 0.0,
@@ -136,132 +101,27 @@
           "F1@10": 0.0
         },
         "ndcg_at_k": {
-          "NDCG@1": 1.0,
-          "NDCG@3": 1.0,
-          "NDCG@5": 1.0,
-          "NDCG@10": 1.0
+          "NDCG@1": 0.0,
+          "NDCG@3": 0.0,
+          "NDCG@5": 0.0,
+          "NDCG@10": 0.0
         },
         "map_score": 0.0,
         "mrr_score": 0.0,
-        "query_count": 122,
+        "query_count": 554,
         "relevance_analysis": {
-          "total_queries_analyzed": 122,
+          "total_queries_analyzed": 554,
           "total_relevant_items_found": 0,
           "exact_name_matches": 0,
           "average_relevance_per_query": 0.0
-        }
-      },
-      "Category + Price range": {
-        "precision_at_k": {
-          "P@1": 0.7623762376237624,
-          "P@3": 0.6798679867986799,
-          "P@5": 0.6297029702970297,
-          "P@10": 0.5714246424642464
-        },
-        "recall_at_k": {
-          "R@1": 0.16488005943451486,
-          "R@3": 0.36055248381981053,
-          "R@5": 0.5256689954709757,
-          "R@10": 0.819005471975769
-        },
-        "f1_score_at_k": {
-          "F1@1": 0.24535096366779535,
-          "F1@3": 0.4273172372182273,
-          "F1@5": 0.528030385456128,
-          "F1@10": 0.6387124455649729
-        },
-        "ndcg_at_k": {
-          "NDCG@1": 0.8663366336633663,
-          "NDCG@3": 0.8540865760589882,
-          "NDCG@5": 0.8556323365147556,
-          "NDCG@10": 0.9056504364616716
-        },
-        "map_score": 0.736290134142214,
-        "mrr_score": 0.8122227607376122,
-        "query_count": 101,
-        "relevance_analysis": {
-          "total_queries_analyzed": 101,
-          "total_relevant_items_found": 585,
-          "exact_name_matches": 444,
-          "average_relevance_per_query": 5.792079207920792
-        }
-      },
-      "Category + Attribute value": {
-        "precision_at_k": {
-          "P@1": 0.972972972972973,
-          "P@3": 0.972972972972973,
-          "P@5": 0.972972972972973,
-          "P@10": 0.9738738738738739
-        },
-        "recall_at_k": {
-          "R@1": 0.10272131522131522,
-          "R@3": 0.30816394566394567,
-          "R@5": 0.5136065761065761,
-          "R@10": 0.9071645321645322
-        },
-        "f1_score_at_k": {
-          "F1@1": 0.18499989235283354,
-          "F1@3": 0.46372547138801007,
-          "F1@5": 0.6645980299231073,
-          "F1@10": 0.9351256525169569
-        },
-        "ndcg_at_k": {
-          "NDCG@1": 0.972972972972973,
-          "NDCG@3": 0.972972972972973,
-          "NDCG@5": 0.972972972972973,
-          "NDCG@10": 0.9743822183964648
-        },
-        "map_score": 0.9746409746409747,
-        "mrr_score": 0.9742599742599742,
-        "query_count": 111,
-        "relevance_analysis": {
-          "total_queries_analyzed": 111,
-          "total_relevant_items_found": 1081,
-          "exact_name_matches": 1081,
-          "average_relevance_per_query": 9.73873873873874
-        }
-      },
-      "Description": {
-        "precision_at_k": {
-          "P@1": 0.13675213675213677,
-          "P@3": 0.11965811965811965,
-          "P@5": 0.09572649572649573,
-          "P@10": 0.06094491927825261
-        },
-        "recall_at_k": {
-          "R@1": 0.0594017094017094,
-          "R@3": 0.1361823361823362,
-          "R@5": 0.17777777777777778,
-          "R@10": 0.22407407407407406
-        },
-        "f1_score_at_k": {
-          "F1@1": 0.07822547822547822,
-          "F1@3": 0.12142857142857143,
-          "F1@5": 0.11924063590730258,
-          "F1@10": 0.09273385683642094
-        },
-        "ndcg_at_k": {
-          "NDCG@1": 0.5470085470085471,
-          "NDCG@3": 0.5630210321074214,
-          "NDCG@5": 0.5670915462479929,
-          "NDCG@10": 0.592486716800583
-        },
-        "map_score": 0.15878519865699353,
-        "mrr_score": 0.16652421652421653,
-        "query_count": 117,
-        "relevance_analysis": {
-          "total_queries_analyzed": 117,
-          "total_relevant_items_found": 71,
-          "exact_name_matches": 0,
-          "average_relevance_per_query": 0.6068376068376068
         }
       }
     }
   },
   "coverage_metrics": {
-    "total_products_returned": 6087,
-    "avg_products_per_query": 10.987364620938628,
-    "avg_products_per_successful_query": 10.987364620938628,
+    "total_products_returned": 6084,
+    "avg_products_per_query": 10.981949458483754,
+    "avg_products_per_successful_query": 10.981949458483754,
     "median_products_per_query": 10.0,
     "zero_results_count": 819,
     "zero_results_rate": 59.6504005826657,
@@ -272,11 +132,7 @@
   },
   "detailed_analysis": {
     "question_type_distribution": {
-      "Exact word": 275,
-      "Category": 275,
-      "Category + Price range": 275,
-      "Category + Attribute value": 274,
-      "Description": 274
+      "Unknown": 1373
     },
     "product_category_distribution": {
       "Unknown": 1373
@@ -291,11 +147,7 @@
     "throttling_rate": 59.359067734887105,
     "success_rate": 40.3495994173343,
     "throttling_by_question_type": {
-      "Exact word": 171,
-      "Category": 152,
-      "Category + Price range": 173,
-      "Category + Attribute value": 163,
-      "Description": 156
+      "Unknown": 815
     },
     "throttling_by_category": {
       "Unknown": 815
@@ -334,7 +186,7 @@
     }
   },
   "analysis_metadata": {
-    "generated_at": "2025-08-18T17:10:49.329232",
+    "generated_at": "2025-08-19T02:21:15.776803",
     "analysis_type": "agentic_search_evaluation_with_improved_relevance",
     "relevance_scoring": "question_type_specific",
     "search_api_type": "agentic_search_api",

@@ -1,0 +1,42 @@
+{
+  "metadata": {
+    "script_version": "multi_thread_agentic_search.py",
+    "completion_timestamp": "2025-08-19T02:57:04.983383",
+    "execution_mode": "agentic_search_api",
+    "total_execution_time_seconds": 22.727035522460938
+  },
+  "final_statistics": {
+    "total_questions": 9600,
+    "successful_requests": 44,
+    "failed_requests": 0,
+    "success_rate_percentage": 0.4583333333333333,
+    "processing_time_seconds": 22.727035522460938,
+    "processing_rate_per_second": 1.9360202062655805,
+    "average_response_time_seconds": 10.889741610396992,
+    "min_response_time_seconds": 4.749220371246338,
+    "max_response_time_seconds": 20.781150102615356,
+    "status_code_distribution": {
+      "200": 44
+    },
+    "error_type_distribution": {},
+    "throttled_requests": 0,
+    "throttling_rate_percentage": 0.0,
+    "non_throttled_total": 9600,
+    "average_results_per_query": 0.0,
+    "total_results_returned": 0
+  },
+  "throttling_summary": {
+    "throttled_requests": 0,
+    "throttling_rate": 0.0,
+    "throttled_examples": [],
+    "note": "Throttled requests (HTTP 429) are excluded from analysis results"
+  },
+  "summary": {
+    "questions_processed": 44,
+    "questions_analyzed": 44,
+    "success_rate": 0.4583333333333333,
+    "average_response_time": 10.889741610396992,
+    "total_results_found": 0,
+    "note": "Analysis excludes throttled requests (HTTP 429)"
+  }
+}

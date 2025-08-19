@@ -364,10 +364,12 @@ class AgenticSearchClient:
         self.session.mount('http://', adapter)
         self.session.mount('https://', adapter)
         
-        # Initialize headers
+        # Initialize headers to match PowerShell Invoke-RestMethod
         self.headers = {
             "Content-Type": "application/json",
-            "User-Agent": "agentic-search-tester/1.0",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Microsoft Windows 10.0.22631; en-US) PowerShell/7.4.5",
+            "Accept": "application/json, text/json, text/x-json, text/javascript, application/xml, text/xml",
+            "Accept-Encoding": "gzip, deflate, br",
             "Connection": "keep-alive"
         }
         
@@ -387,77 +389,105 @@ class AgenticSearchClient:
         }
         
         try:
-            # Check if response has FormattedText field
-            formatted_text = response_data.get("FormattedText", "")
+            # Check for new API response format with direct Products array
+            result = response_data.get("Result", {})
+            products = result.get("Products", [])
             
-            if formatted_text:
-                # Try to parse as JSON if it looks like JSON
-                if formatted_text.strip().startswith('{') or formatted_text.strip().startswith('['):
-                    try:
-                        parsed_data = json.loads(formatted_text)
+            if products and isinstance(products, list):
+                for product in products:
+                    if isinstance(product, dict):
+                        name = product.get("Name", "")
+                        description = product.get("Description", "")
+                        price = product.get("Price")
                         
-                        # Handle different response structures
-                        if isinstance(parsed_data, list):
-                            for item in parsed_data:
-                                if isinstance(item, dict) and "content" in item:
-                                    content = item["content"]
-                                    if isinstance(content, dict):
-                                        product_name = content.get("name", "")
-                                        product_desc = content.get("description", "")
-                                        if product_name:
-                                            product_info["product_names"].append(product_name)
-                                            product_info["product_descriptions"].append(product_desc)
-                                            product_info["products_found"].append({
-                                                "name": product_name,
-                                                "description": product_desc,
-                                                "price": content.get("price"),
-                                                "ref_id": item.get("ref_id")
-                                            })
-                                        
-                        elif isinstance(parsed_data, dict):
-                            # Handle single product or other dict structures
-                            if "content" in parsed_data:
-                                content = parsed_data["content"]
-                                product_name = content.get("name", "")
-                                product_desc = content.get("description", "")
-                                if product_name:
-                                    product_info["product_names"].append(product_name)
-                                    product_info["product_descriptions"].append(product_desc)
-                                    product_info["products_found"].append({
-                                        "name": product_name,
-                                        "description": product_desc,
-                                        "price": content.get("price"),
-                                        "ref_id": parsed_data.get("ref_id")
-                                    })
-                                    
-                    except json.JSONDecodeError:
-                        # If not valid JSON, try to extract product names from text
-                        import re
-                        name_matches = re.findall(r'"name":\s*"([^"]+)"', formatted_text)
-                        desc_matches = re.findall(r'"description":\s*"([^"]+)"', formatted_text)
-                        product_info["product_names"] = name_matches
-                        product_info["product_descriptions"] = desc_matches
-                        
-                        # Create products_found from extracted names/descriptions
-                        for i, name in enumerate(name_matches):
-                            desc = desc_matches[i] if i < len(desc_matches) else ""
+                        if name:
+                            product_info["product_names"].append(name)
+                            product_info["product_descriptions"].append(description)
                             product_info["products_found"].append({
                                 "name": name,
-                                "description": desc,
-                                "price": None,
-                                "ref_id": None
+                                "description": description,
+                                "price": price,
+                                "product_number": product.get("ProductNumber"),
+                                "color": product.get("Color"),
+                                "size": product.get("Size"),
+                                "material": product.get("Material"),
+                                "relevance_score": product.get("RelevanceScore")
                             })
+            
+            # Fallback: Check if response has old FormattedText field for backwards compatibility
+            elif "FormattedText" in response_data:
+                formatted_text = response_data.get("FormattedText", "")
+                
+                if formatted_text:
+                    # Try to parse as JSON if it looks like JSON
+                    if formatted_text.strip().startswith('{') or formatted_text.strip().startswith('['):
+                        try:
+                            parsed_data = json.loads(formatted_text)
+                            
+                            # Handle different response structures
+                            if isinstance(parsed_data, list):
+                                for item in parsed_data:
+                                    if isinstance(item, dict) and "content" in item:
+                                        content = item["content"]
+                                        if isinstance(content, dict):
+                                            product_name = content.get("name", "")
+                                            product_desc = content.get("description", "")
+                                            if product_name:
+                                                product_info["product_names"].append(product_name)
+                                                product_info["product_descriptions"].append(product_desc)
+                                                product_info["products_found"].append({
+                                                    "name": product_name,
+                                                    "description": product_desc,
+                                                    "price": content.get("price"),
+                                                    "ref_id": item.get("ref_id")
+                                                })
+                                            
+                            elif isinstance(parsed_data, dict):
+                                # Handle single product or other dict structures
+                                if "content" in parsed_data:
+                                    content = parsed_data["content"]
+                                    product_name = content.get("name", "")
+                                    product_desc = content.get("description", "")
+                                    if product_name:
+                                        product_info["product_names"].append(product_name)
+                                        product_info["product_descriptions"].append(product_desc)
+                                        product_info["products_found"].append({
+                                            "name": product_name,
+                                            "description": product_desc,
+                                            "price": content.get("price"),
+                                            "ref_id": parsed_data.get("ref_id")
+                                        })
+                                        
+                        except json.JSONDecodeError:
+                            # If not valid JSON, try to extract product names from text
+                            import re
+                            name_matches = re.findall(r'"name":\s*"([^"]+)"', formatted_text)
+                            desc_matches = re.findall(r'"description":\s*"([^"]+)"', formatted_text)
+                            product_info["product_names"] = name_matches
+                            product_info["product_descriptions"] = desc_matches
+                            
+                            # Create products_found from extracted names/descriptions
+                            for i, name in enumerate(name_matches):
+                                desc = desc_matches[i] if i < len(desc_matches) else ""
+                                product_info["products_found"].append({
+                                    "name": name,
+                                    "description": desc,
+                                    "price": None,
+                                    "ref_id": None
+                                })
                             
         except Exception as e:
             print(f"⚠️ Error extracting product info: {e}")
+        
         
         return product_info
 
     def search(self, query_text, retry_count=1):
         """Execute agentic search API call with timing"""
         
+        # Use uppercase 'Query' to match PowerShell format
         payload = {
-            "query": query_text
+            "Query": query_text
         }
         
         start_time = time.time()

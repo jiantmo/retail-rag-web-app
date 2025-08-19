@@ -13,6 +13,7 @@ from collections import defaultdict, Counter
 from datetime import datetime
 from typing import Dict, List, Any, Tuple
 from unified_relevance_scorer import UnifiedRelevanceScorer
+from simplified_relevance_scorer import SimplifiedRelevanceScorer
 
 class EnhancedSearchAnalyzer:
     """
@@ -26,7 +27,7 @@ class EnhancedSearchAnalyzer:
     """
     
     def __init__(self):
-        self.relevance_scorer = UnifiedRelevanceScorer()
+        self.relevance_scorer = SimplifiedRelevanceScorer()
         
     def analyze_jsonl_results(self, jsonl_file_path: str) -> Dict[str, Any]:
         """
@@ -177,15 +178,17 @@ class EnhancedSearchAnalyzer:
             if not detailed_results:
                 continue
             
-            # Calculate relevance scores using unified scorer
+            # Calculate relevance scores using unified scorer (convert 0-3 scale to 0-1 scale)
             relevance_scores = []
             for search_item in detailed_results:
-                score = self.relevance_scorer.score_result_relevance(search_item, test_context, 'dataverse')
-                relevance_scores.append(score)
+                raw_score = self.relevance_scorer.score_result_relevance(search_item, test_context, 'dataverse')
+                # Convert 0-3 scale to 0-1 scale: 0->0.0, 1->0.33, 2->0.67, 3->1.0
+                normalized_score = raw_score / 3.0 if raw_score > 0 else 0.0
+                relevance_scores.append(normalized_score)
             
-            # Count relevant items and exact matches
-            relevant_items = [score for score in relevance_scores if score >= 2]  # Score >= 2 is relevant
-            exact_matches = [score for score in relevance_scores if score >= 3]   # Score >= 3 is exact match
+            # Count relevant items and exact matches (using normalized scale)
+            relevant_items = [score for score in relevance_scores if score >= 0.67]  # Score >= 0.67 (was 2/3) is relevant
+            exact_matches = [score for score in relevance_scores if score >= 1.0]    # Score >= 1.0 (was 3/3) is exact match
             
             total_relevant_items += len(relevant_items)
             exact_name_matches += len(exact_matches)
@@ -280,7 +283,7 @@ class EnhancedSearchAnalyzer:
         
         return []
     
-    def _calculate_precision_recall_f1(self, relevance_scores: List[int], k: int) -> Tuple[float, float, float]:
+    def _calculate_precision_recall_f1(self, relevance_scores: List[float], k: int) -> Tuple[float, float, float]:
         """Calculate Precision@K, Recall@K, and F1@K"""
         if not relevance_scores:
             return 0.0, 0.0, 0.0
@@ -288,9 +291,9 @@ class EnhancedSearchAnalyzer:
         # Take top K results
         top_k_scores = relevance_scores[:k]
         
-        # Count relevant items (score >= 2)
-        relevant_in_k = sum(1 for score in top_k_scores if score >= 2)
-        total_relevant = sum(1 for score in relevance_scores if score >= 2)
+        # Count relevant items (score >= 0.67, which was 2/3 in 0-3 scale)
+        relevant_in_k = sum(1 for score in top_k_scores if score >= 0.67)
+        total_relevant = sum(1 for score in relevance_scores if score >= 0.67)
         
         # Precision@K = relevant items in top K / K
         precision = relevant_in_k / min(k, len(top_k_scores)) if top_k_scores else 0.0
@@ -317,30 +320,30 @@ class EnhancedSearchAnalyzer:
         
         return dcg / idcg if idcg > 0 else 0.0
     
-    def _calculate_average_precision(self, relevance_scores: List[int]) -> float:
+    def _calculate_average_precision(self, relevance_scores: List[float]) -> float:
         """Calculate Average Precision (AP)"""
         if not relevance_scores:
             return 0.0
         
         relevant_count = 0
         precision_sum = 0.0
-        total_relevant = sum(1 for score in relevance_scores if score >= 2)
+        total_relevant = sum(1 for score in relevance_scores if score >= 0.67)
         
         if total_relevant == 0:
             return 0.0
         
         for i, score in enumerate(relevance_scores):
-            if score >= 2:  # Relevant
+            if score >= 0.67:  # Relevant (was >= 2 in 0-3 scale)
                 relevant_count += 1
                 precision_at_i = relevant_count / (i + 1)
                 precision_sum += precision_at_i
         
         return precision_sum / total_relevant
     
-    def _calculate_reciprocal_rank(self, relevance_scores: List[int]) -> float:
+    def _calculate_reciprocal_rank(self, relevance_scores: List[float]) -> float:
         """Calculate Reciprocal Rank (RR)"""
         for i, score in enumerate(relevance_scores):
-            if score >= 2:  # First relevant result
+            if score >= 0.67:  # First relevant result (was >= 2 in 0-3 scale)
                 return 1.0 / (i + 1)
         return 0.0
     

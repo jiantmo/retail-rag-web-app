@@ -13,21 +13,23 @@ import re
 from collections import defaultdict, Counter
 from datetime import datetime
 from typing import Dict, List, Any, Tuple
-from unified_relevance_scorer import UnifiedRelevanceScorer
+from simplified_relevance_scorer import SimplifiedRelevanceScorer
 
 class AgenticSearchAnalyzer:
     """
-    Agentic search analyzer with improved relevance scoring.
+    Agentic search analyzer with simplified relevance scoring.
     Designed specifically for agentic search API results that use FormattedText structure.
     
-    Key differences from standard search analysis:
-    1. Results are in response_data.result.FormattedText as JSON string
-    2. Products are extracted from ref_id content items
-    3. Uses same relevance scoring logic but adapted for agentic response format
+    100% Relevant Criteria:
+    1. Exact word – Result contains the product name
+    2. Category – Result category matches original product category  
+    3. Category + Attribute – Result category matches AND contains mentioned attributes
+    4. Category + Price – Result category matches AND price in question range
+    5. Description – Result contains key words from description
     """
     
     def __init__(self):
-        self.relevance_scorer = UnifiedRelevanceScorer()
+        self.relevance_scorer = SimplifiedRelevanceScorer()
         
     def analyze_jsonl_results(self, jsonl_file_path: str) -> Dict[str, Any]:
         """
@@ -226,12 +228,6 @@ class AgenticSearchAnalyzer:
                 
             # Extract test case context
             test_context = result.get('test_case_context', {})
-            query_metadata = result.get('query_metadata', {})
-            
-            # Use query_metadata if test_case_context is empty
-            if not test_context and query_metadata:
-                test_context = query_metadata
-            
             question_type = test_context.get('question_type', 'Unknown')
             
             # Extract products from agentic search response
@@ -241,10 +237,10 @@ class AgenticSearchAnalyzer:
             
             total_product_items_extracted += len(detailed_results)
             
-            # Calculate relevance scores using unified scorer
+            # Calculate relevance scores using improved scorer
             relevance_scores = []
             for product_item in detailed_results:
-                score = self.relevance_scorer.score_result_relevance(product_item, test_context, 'agentic')
+                score = self.relevance_scorer.score_result_relevance(product_item, test_context)
                 relevance_scores.append(score)
             
             # Count relevant items and exact matches
@@ -401,64 +397,14 @@ class AgenticSearchAnalyzer:
             if description_match:
                 product['Description'] = description_match.group(1).strip()
             
-            # Store the full content for attribute scoring
-            product['FullContent'] = content
-            
-            # Extract AttributeValues using improved parsing
-            attributes = {}
-            try:
-                # Look for AttributeValues section
-                attr_values_match = re.search(r'AttributeValues:\s*(\[.*?\])', content, re.DOTALL)
-                if attr_values_match:
-                    attr_text = attr_values_match.group(1)
-                    
-                    # Extract TextValue attributes with various quote patterns
-                    text_value_patterns = [
-                        r"'TextValue':\s*'([^']+)'",  # Single quotes
-                        r'"TextValue":\s*"([^"]+)"',  # Double quotes
-                        r"'TextValue':\s*\"([^\"]+)\"",  # Mixed quotes
-                    ]
-                    
-                    for pattern in text_value_patterns:
-                        matches = re.findall(pattern, attr_text)
-                        for match in matches:
-                            # Try to categorize the attribute
-                            if re.match(r'^[MLXS].*|.*[MLXS]$', match, re.IGNORECASE):
-                                if 'sizes' not in attributes:
-                                    attributes['sizes'] = []
-                                # Handle pipe-separated sizes
-                                sizes = [s.strip() for s in match.split('|') if s.strip()]
-                                attributes['sizes'].extend(sizes)
-                            else:
-                                if 'materials' not in attributes:
-                                    attributes['materials'] = []
-                                attributes['materials'].append(match.lower())
-                    
-                    # Extract Color values specifically
-                    color_patterns = [
-                        r"'Color'[^}]*'TextValue':\s*'([^']+)'",
-                        r'"Color"[^}]*"TextValue":\s*"([^"]+)"',
-                        r"'Color'[^}]*'TextValue':\s*\"([^\"]+)\"",
-                    ]
-                    
-                    for pattern in color_patterns:
-                        color_matches = re.findall(pattern, attr_text)
-                        for color in color_matches:
-                            if 'colors' not in attributes:
-                                attributes['colors'] = []
-                            # Handle pipe-separated colors
-                            colors = [c.strip() for c in color.split('|') if c.strip()]
-                            attributes['colors'].extend(colors)
-                    
-                    product['Attributes'] = attributes
-                    
-            except Exception as e:
-                # Fallback to basic attribute extraction
-                # Store the full content so attribute scoring can access it
-                pass
+            # Extract attributes (simplified)
+            # Look for Size values
+            size_values = re.findall(r"'TextValue':\s*'([^']*)'", content)
+            if size_values:
+                product['Attributes'] = {'sizes': size_values}
             
             # Only return product if we have essential fields
-            if 'Name' in product:
+            if 'Name' in product and 'Price' in product:
                 return product
             
             return None
@@ -674,12 +620,6 @@ class AgenticSearchAnalyzer:
         
         for result in search_results:
             test_context = result.get('test_case_context', {})
-            query_metadata = result.get('query_metadata', {})
-            
-            # Use query_metadata if test_case_context is empty
-            if not test_context and query_metadata:
-                test_context = query_metadata
-            
             q_type = test_context.get('question_type', 'Unknown')
             category = test_context.get('original_product_category', 'Unknown')
             
@@ -704,12 +644,6 @@ class AgenticSearchAnalyzer:
         
         for result in search_results:
             test_context = result.get('test_case_context', {})
-            query_metadata = result.get('query_metadata', {})
-            
-            # Use query_metadata if test_case_context is empty
-            if not test_context and query_metadata:
-                test_context = query_metadata
-            
             q_type = test_context.get('question_type', 'Unknown')
             category = test_context.get('original_product_category', 'Unknown')
             

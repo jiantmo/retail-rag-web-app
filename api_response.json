@@ -1,0 +1,313 @@
+{
+  "Success": true,
+  "SearchType": "Agentic AI Search",
+  "Query": "What accessory offers good performance?",
+  "Result": {
+    "Summary": "Found 13 products matching your criteria. Top products include: **Serava Pack**, **Sifulayaka Skis**, **Templix Fins** and 10 more, with prices ranging from $15.00 - $670.00.",
+    "Products": [
+      {
+        "Name": "Serava Pack",
+        "Price": 130.0,
+        "ProductNumber": "69203",
+        "Description": "This Serava pack is made with high quality tear and water resistant material, provides extra strength and long-lasting performance with the lightest weight possible. The extra strength provided by the double-layer bottom piece makes it very convenient to carry more load on your journeys. Heavy duty two-way SBS metal zippers across the backpack are convenient to operation on whichever side you prefer. Longevity is further enhanced by bar-tacks at major stress points.",
+        "Color": "",
+        "Size": "",
+        "Material": "",
+        "ImageUrls": [],
+        "RefId": "",
+        "RelevanceScore": 0.9
+      },
+      {
+        "Name": "Sifulayaka Skis",
+        "Price": 399.0,
+        "ProductNumber": "71502",
+        "Description": "These carving specialists are smooth, stable, and deliciously grippy, with a full woodcore that delivers snappy, energetic performance from top to bottom.",
+        "Color": "",
+        "Size": "",
+        "Material": "",
+        "ImageUrls": [],
+        "RefId": "",
+        "RelevanceScore": 0.9
+      },
+      {
+        "Name": "Templix Fins",
+        "Price": 80.0,
+        "ProductNumber": "73309",
+        "Description": "Templex fins are made of premium silicone, featuring with great durability, lightweight and comfortable to wear, improving the comfortness and training effect. Training with short swimming flipper can effective stretch the ankle ligaments which can gradually improve the flexibility of the ankle joint and effectively strengthen the whipping performance so as to improve the overall swiming performance. For kids with weaker swimming whipping action, this pair of short flipper would be a nice choice.",
+        "Color": "",
+        "Size": "",
+        "Material": "",
+        "ImageUrls": [],
+        "RefId": "",
+        "RelevanceScore": 0.9
+      },
+      {
+        "Name": "Cartlops Surf Wetsuit",
+        "Price": 140.0,
+        "ProductNumber": "72200",
+        "Description": "The newly upgraded Cartlops is engineered for performance in a value driven package. A perfect combination of stretch and durability. Fresh colors and graphics with style that's built to last.",
+        "Color": "",
+        "Size": "",
+        "Material": "",
+        "ImageUrls": [],
+        "RefId": "",
+        "RelevanceScore": 0.9
+      },
+      {
+        "Name": "Perozly Carabiner",
+        "Price": 15.0,
+        "ProductNumber": "66004",
+        "Description": "The redesigned Perozly straight gate carabiner is lighter than before yet has the same smooth action that makes clipping bolts or pro quick and easy.",
+        "Color": "",
+        "Size": "",
+        "Material": "",
+        "ImageUrls": [],
+        "RefId": "",
+        "RelevanceScore": 0.9
+      },
+      {
+        "Name": "Bundor Surfboard",
+        "Price": 670.0,
+        "ProductNumber": "72107",
+        "Description": "Bundor is full of performance and volume for the core surfer that is looking to take their surfing to the next level. Improved with a slight vee running through the tail to create turns with less effort and release more drive during rail to rail surfing.",
+        "Color": "",
+        "Size": "",
+        "Material": "",
+        "ImageUrls": [],
+        "RefId": "",
+        "RelevanceScore": 0.9
+      },
+      {
+        "Name": "Brikken Knife",
+        "Price": 59.0,
+        "ProductNumber": "65411",
+        "Description": "The knife is made of reliable stainless steel for excellent cutting performance and corrosion resistance. Ergonomic wooden handle design, comfortable operation and beautiful appearance are combined to form a knife with a great feel in your hand.",
+        "Color": "",
+        "Size": "",
+        "Material": "",
+        "ImageUrls": [],
+        "RefId": "",
+        "RelevanceScore": 0.9
+      },
+      {
+        "Name": "Lumina Light",
+        "Price": 48.0,
+        "ProductNumber": "65404",
+        "Description": "Versatile Tool for Every Occasion. Compact and Powerful. Adjustable Focus LED Flashlight. Pocket-sized 0.5W LED Torch. Crafted with a strong and durable plastic body, this mini torch is built to withstand the rigors of outdoor activities, emergencies, camping, hiking, fishing, home use, and car breakdowns.",
+        "Color": "",
+        "Size": "",
+        "Material": "",
+        "ImageUrls": [],
+        "RefId": "",
+        "RelevanceScore": 0.9
+      },
+      {
+        "Name": "Boleg cogset",
+        "Price": 25.0,
+        "ProductNumber": "67100",
+        "Description": "This freewheel is characterized by smooth rotation without much noise and high precision internal thread. It ensures close connection with bicycle hub as well as smooth operation.",
+        "Color": "",
+        "Size": "",
+        "Material": "",
+        "ImageUrls": [],
+        "RefId": "",
+        "RelevanceScore": 0.9
+      },
+      {
+        "Name": "Svetty Light",
+        "Price": 45.0,
+        "ProductNumber": "65402",
+        "Description": "Compact and Powerful. Adjustable Focus LED Flashlight. Pocket-sized 0.5W LED Torch. Crafted with a strong and durable plastic body, this mini torch is built to withstand the rigors of outdoor activities, emergencies, camping, hiking, fishing, home use, and car breakdowns.",
+        "Color": "",
+        "Size": "",
+        "Material": "",
+        "ImageUrls": [],
+        "RefId": "",
+        "RelevanceScore": 0.9
+      },
+      {
+        "Name": "Heatker Women's Jacket",
+        "Price": 119.0,
+        "ProductNumber": "62204",
+        "Description": "Loaded with must-have performance features, this jacket which is made from ultralight materials has you covered and cozy for trail explorations in variable weather.",
+        "Color": "",
+        "Size": "",
+        "Material": "",
+        "ImageUrls": [],
+        "RefId": "",
+        "RelevanceScore": 0.9
+      },
+      {
+        "Name": "Flaks hand grip",
+        "Price": 17.0,
+        "ProductNumber": "66200",
+        "Description": "Ergonomic design with soft foam handle fits all hand size for men and women, and providing a maximum comfort grip and anti-slipping. Built to last with the high quality hard foam/plastic handle and aluminium springs.",
+        "Color": "",
+        "Size": "",
+        "Material": "",
+        "ImageUrls": [],
+        "RefId": "",
+        "RelevanceScore": 0.9
+      },
+      {
+        "Name": "Furano Adult Bike Helmet",
+        "Price": 80.0,
+        "ProductNumber": "67205",
+        "Description": "The Furano helmet makes your ride safer and more fun. It has all the advanced features you expect in a professional grade bike helmet, yet it is also easy to wear. This adult bike helmet is ideal for cycling enthusiasts and weekend riders.",
+        "Color": "",
+        "Size": "",
+        "Material": "",
+        "ImageUrls": [],
+        "RefId": "",
+        "RelevanceScore": 0.9
+      }
+    ],
+    "Recommendations": [
+      {
+        "Title": "Feature Comparison",
+        "Description": "Compare key features to find the best fit for your needs",
+        "Icon": "fa-list-check",
+        "Category": "Features",
+        "Tags": [
+          "comparison",
+          "features",
+          "analysis"
+        ]
+      }
+    ],
+    "Insights": [],
+    "Explanation": "AI agent analyzed your query 'What accessory offers good performance?' and created optimized sub-queries to find 13 products. The agent used intelligent query planning and parallel search for comprehensive results."
+  },
+  "Metadata": {
+    "Timestamp": "2025-08-19T09:44:41.5393427Z",
+    "ProcessingTimeMs": 1712,
+    "TotalResults": 13,
+    "SubQueries": [
+      {
+        "Index": 1,
+        "Query": "accessory with good performance",
+        "Filter": null,
+        "ResultCount": 46,
+        "ElapsedMs": 362,
+        "QueryTime": "0001-01-01T00:00:00",
+        "Purpose": "Product discovery"
+      },
+      {
+        "Index": 2,
+        "Query": "",
+        "Filter": null,
+        "ResultCount": 0,
+        "ElapsedMs": 0,
+        "QueryTime": "0001-01-01T00:00:00",
+        "Purpose": "General search"
+      }
+    ],
+    "TokenUsage": {
+      "InputTokens": 22725,
+      "OutputTokens": 91,
+      "TotalTokens": 22816,
+      "EstimatedCost": 0.45632
+    },
+    "Sources": [
+      {
+        "Id": "0",
+        "Title": "71d62125398b_aHR0cHM6Ly9qaWFudG1vc3RvcmFnZWFjY291bnQuYmxvYi5jb3JlLndpbmRvd3MubmV0L2NvbnRhaW5lci9BZHZlbnR1cmVXb3Jrc0RlbW9EYXRhUHJvZHVjdHNfd2l0aF9lbWJlZGRpbmcuanNvbjs5Mw2_pages_0",
+        "Type": "document",
+        "Content": "",
+        "RelevanceScore": 0.8
+      },
+      {
+        "Id": "1",
+        "Title": "fa66f13804d8_aHR0cHM6Ly9qaWFudG1vc3RvcmFnZWFjY291bnQuYmxvYi5jb3JlLndpbmRvd3MubmV0L2NvbnRhaW5lci9BZHZlbnR1cmVXb3Jrc0RlbW9EYXRhUHJvZHVjdHNfd2l0aF9lbWJlZGRpbmcuanNvbjsxODM1_pages_0",
+        "Type": "document",
+        "Content": "",
+        "RelevanceScore": 0.8
+      },
+      {
+        "Id": "2",
+        "Title": "71959e0db17d_aHR0cHM6Ly9qaWFudG1vc3RvcmFnZWFjY291bnQuYmxvYi5jb3JlLndpbmRvd3MubmV0L2NvbnRhaW5lci9BZHZlbnR1cmVXb3Jrc0RlbW9EYXRhUHJvZHVjdHNfd2l0aF9lbWJlZGRpbmcuanNvbjsxNTI1_pages_0",
+        "Type": "document",
+        "Content": "",
+        "RelevanceScore": 0.8
+      },
+      {
+        "Id": "3",
+        "Title": "86c10f87e30d_aHR0cHM6Ly9qaWFudG1vc3RvcmFnZWFjY291bnQuYmxvYi5jb3JlLndpbmRvd3MubmV0L2NvbnRhaW5lci9BZHZlbnR1cmVXb3Jrc0RlbW9EYXRhUHJvZHVjdHNfd2l0aF9lbWJlZGRpbmcuanNvbjsyNjg1_pages_0",
+        "Type": "document",
+        "Content": "",
+        "RelevanceScore": 0.8
+      },
+      {
+        "Id": "4",
+        "Title": "68d347faf294_aHR0cHM6Ly9qaWFudG1vc3RvcmFnZWFjY291bnQuYmxvYi5jb3JlLndpbmRvd3MubmV0L2NvbnRhaW5lci9BZHZlbnR1cmVXb3Jrc0RlbW9EYXRhUHJvZHVjdHNfd2l0aF9lbWJlZGRpbmcuanNvbjszMDg1_pages_0",
+        "Type": "document",
+        "Content": "",
+        "RelevanceScore": 0.8
+      },
+      {
+        "Id": "5",
+        "Title": "fd9db323b691_aHR0cHM6Ly9qaWFudG1vc3RvcmFnZWFjY291bnQuYmxvYi5jb3JlLndpbmRvd3MubmV0L2NvbnRhaW5lci9BZHZlbnR1cmVXb3Jrc0RlbW9EYXRhUHJvZHVjdHNfd2l0aF9lbWJlZGRpbmcuanNvbjsxMQ2_pages_0",
+        "Type": "document",
+        "Content": "",
+        "RelevanceScore": 0.8
+      },
+      {
+        "Id": "6",
+        "Title": "68d347faf294_aHR0cHM6Ly9qaWFudG1vc3RvcmFnZWFjY291bnQuYmxvYi5jb3JlLndpbmRvd3MubmV0L2NvbnRhaW5lci9BZHZlbnR1cmVXb3Jrc0RlbW9EYXRhUHJvZHVjdHNfd2l0aF9lbWJlZGRpbmcuanNvbjsyOTI1_pages_0",
+        "Type": "document",
+        "Content": "",
+        "RelevanceScore": 0.8
+      },
+      {
+        "Id": "7",
+        "Title": "71d62125398b_aHR0cHM6Ly9qaWFudG1vc3RvcmFnZWFjY291bnQuYmxvYi5jb3JlLndpbmRvd3MubmV0L2NvbnRhaW5lci9BZHZlbnR1cmVXb3Jrc0RlbW9EYXRhUHJvZHVjdHNfd2l0aF9lbWJlZGRpbmcuanNvbjsxMTY1_pages_0",
+        "Type": "document",
+        "Content": "",
+        "RelevanceScore": 0.8
+      },
+      {
+        "Id": "8",
+        "Title": "68d347faf294_aHR0cHM6Ly9qaWFudG1vc3RvcmFnZWFjY291bnQuYmxvYi5jb3JlLndpbmRvd3MubmV0L2NvbnRhaW5lci9BZHZlbnR1cmVXb3Jrc0RlbW9EYXRhUHJvZHVjdHNfd2l0aF9lbWJlZGRpbmcuanNvbjszMzE1_pages_0",
+        "Type": "document",
+        "Content": "",
+        "RelevanceScore": 0.8
+      },
+      {
+        "Id": "9",
+        "Title": "71d62125398b_aHR0cHM6Ly9qaWFudG1vc3RvcmFnZWFjY291bnQuYmxvYi5jb3JlLndpbmRvd3MubmV0L2NvbnRhaW5lci9BZHZlbnR1cmVXb3Jrc0RlbW9EYXRhUHJvZHVjdHNfd2l0aF9lbWJlZGRpbmcuanNvbjsxMzI1_pages_0",
+        "Type": "document",
+        "Content": "",
+        "RelevanceScore": 0.8
+      },
+      {
+        "Id": "10",
+        "Title": "a34586fa961c_aHR0cHM6Ly9qaWFudG1vc3RvcmFnZWFjY291bnQuYmxvYi5jb3JlLndpbmRvd3MubmV0L2NvbnRhaW5lci9BZHZlbnR1cmVXb3Jrc0RlbW9EYXRhUHJvZHVjdHNfd2l0aF9lbWJlZGRpbmcuanNvbjs0NA2_pages_0",
+        "Type": "document",
+        "Content": "",
+        "RelevanceScore": 0.8
+      },
+      {
+        "Id": "11",
+        "Title": "68d347faf294_aHR0cHM6Ly9qaWFudG1vc3RvcmFnZWFjY291bnQuYmxvYi5jb3JlLndpbmRvd3MubmV0L2NvbnRhaW5lci9BZHZlbnR1cmVXb3Jrc0RlbW9EYXRhUHJvZHVjdHNfd2l0aF9lbWJlZGRpbmcuanNvbjszMDU1_pages_0",
+        "Type": "document",
+        "Content": "",
+        "RelevanceScore": 0.8
+      },
+      {
+        "Id": "12",
+        "Title": "71d62125398b_aHR0cHM6Ly9qaWFudG1vc3RvcmFnZWFjY291bnQuYmxvYi5jb3JlLndpbmRvd3MubmV0L2NvbnRhaW5lci9BZHZlbnR1cmVXb3Jrc0RlbW9EYXRhUHJvZHVjdHNfd2l0aF9lbWJlZGRpbmcuanNvbjsxMDE1_pages_0",
+        "Type": "document",
+        "Content": "",
+        "RelevanceScore": 0.8
+      }
+    ],
+    "Stats": {
+      "DocumentsSearched": 13,
+      "DocumentsRanked": 0,
+      "PlanningOperations": 1,
+      "ParallelQueries": 2
+    },
+    "SearchStrategy": "AI-Powered Query Planning with Parallel Retrieval"
+  },
+  "Error": null
+}
