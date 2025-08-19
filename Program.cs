@@ -23,6 +23,7 @@ builder.Services.AddScoped<retail_rag_web_app.Services.AgenticSearchService>();
 builder.Services.AddScoped<retail_rag_web_app.Services.AgenticRetrievalService>();
 builder.Services.AddScoped<retail_rag_web_app.Services.KnowledgeAgentManagementService>();
 builder.Services.AddScoped<retail_rag_web_app.Services.DataverseService>();
+builder.Services.AddScoped<retail_rag_web_app.Services.ResponseFormatterService>();
 
 var app = builder.Build();
 

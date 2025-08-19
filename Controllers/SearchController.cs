@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using retail_rag_web_app.Models;
 using retail_rag_web_app.Services;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace retail_rag_web_app.Controllers
 {
@@ -10,12 +11,18 @@ namespace retail_rag_web_app.Controllers
     {
         private readonly RagService _ragService;
         private readonly DataverseService _dataverseService;
+        private readonly ResponseFormatterService _formatterService;
         private readonly ILogger<SearchController> _logger;
 
-        public SearchController(RagService ragService, DataverseService dataverseService, ILogger<SearchController> logger)
+        public SearchController(
+            RagService ragService, 
+            DataverseService dataverseService, 
+            ResponseFormatterService formatterService,
+            ILogger<SearchController> logger)
         {
             _ragService = ragService;
             _dataverseService = dataverseService;
+            _formatterService = formatterService;
             _logger = logger;
         }
 
@@ -46,6 +53,8 @@ namespace retail_rag_web_app.Controllers
         [HttpPost("execute")]
         public async Task<IActionResult> ExecuteSearch([FromBody] SearchRequest searchRequest)
         {
+            var stopwatch = Stopwatch.StartNew();
+            
             try
             {
                 // Log the raw request body for debugging
@@ -71,21 +80,45 @@ namespace retail_rag_web_app.Controllers
                     return BadRequest("Query is required.");
                 }
 
-                _logger.LogInformation("Processing search query: {Query}", searchRequest.Query);
+                _logger.LogInformation("Processing RAG search query: {Query}", searchRequest.Query);
 
-                var result = await _ragService.SearchAsync(searchRequest.Query);
-                return Json(new { success = true, result });
+                var rawResult = await _ragService.SearchAsync(searchRequest.Query);
+                stopwatch.Stop();
+                
+                // Format the response using the formatter service
+                var formattedResponse = _formatterService.FormatRagResponse(
+                    rawResult, 
+                    searchRequest.Query, 
+                    (int)stopwatch.ElapsedMilliseconds);
+
+                return Json(formattedResponse);
             }
             catch (Exception ex)
             {
+                stopwatch.Stop();
                 _logger.LogError(ex, "Error processing search request: {Error}", ex.Message);
-                return Json(new { success = false, error = "An error occurred while processing your request." });
+                
+                var errorResponse = new FormattedSearchResponse
+                {
+                    Success = false,
+                    Error = "An error occurred while processing your request.",
+                    SearchType = "RAG Search",
+                    Query = searchRequest?.Query ?? "",
+                    Metadata = new SearchMetadata
+                    {
+                        ProcessingTimeMs = (int)stopwatch.ElapsedMilliseconds
+                    }
+                };
+                
+                return Json(errorResponse);
             }
         }
 
         [HttpPost("dataverse")]
         public async Task<IActionResult> DataverseSearch([FromBody] DataverseSearchRequest request)
         {
+            var stopwatch = Stopwatch.StartNew();
+            
             try
             {
                 _logger.LogInformation("Received Dataverse search request for query: {Query}", request?.QueryText);
@@ -93,26 +126,67 @@ namespace retail_rag_web_app.Controllers
                 if (request == null || string.IsNullOrWhiteSpace(request.QueryText))
                 {
                     _logger.LogWarning("Dataverse search request is null or empty");
-                    return BadRequest(new { success = false, error = "Query text is required for Dataverse search." });
+                    return BadRequest(new FormattedSearchResponse 
+                    { 
+                        Success = false, 
+                        Error = "Query text is required for Dataverse search.",
+                        SearchType = "Dataverse Search",
+                        Query = request?.QueryText ?? ""
+                    });
                 }
 
                 var result = await _dataverseService.SearchAsync(request.QueryText, request.BearerToken);
+                stopwatch.Stop();
                 
                 if (result.Success)
                 {
                     _logger.LogInformation("Dataverse search completed successfully");
-                    return Json(new { success = true, result });
+                    
+                    // Format the response using the formatter service
+                    var formattedResponse = _formatterService.FormatDataverseResponse(
+                        result, 
+                        request.QueryText, 
+                        (int)stopwatch.ElapsedMilliseconds);
+
+                    return Json(formattedResponse);
                 }
                 else
                 {
                     _logger.LogWarning("Dataverse search failed: {Error}", result.Error);
-                    return Json(new { success = false, error = result.Error });
+                    
+                    var errorResponse = new FormattedSearchResponse
+                    {
+                        Success = false,
+                        Error = result.Error,
+                        SearchType = "Dataverse Search",
+                        Query = request.QueryText,
+                        Metadata = new SearchMetadata
+                        {
+                            ProcessingTimeMs = (int)stopwatch.ElapsedMilliseconds
+                        }
+                    };
+                    
+                    return Json(errorResponse);
                 }
             }
             catch (Exception ex)
             {
+                stopwatch.Stop();
                 _logger.LogError(ex, "Error processing Dataverse search request: {Error}", ex.Message);
-                return Json(new { success = false, error = "An error occurred while processing your Dataverse search request." });
+                
+                var errorResponse = new FormattedSearchResponse
+                {
+                    Success = false,
+                    Error = "An error occurred while processing your Dataverse search request.",
+                    SearchType = "Dataverse Search",
+                    Query = request?.QueryText ?? "",
+                    Metadata = new SearchMetadata
+                    {
+                        ProcessingTimeMs = (int)stopwatch.ElapsedMilliseconds
+                    }
+                };
+                
+                return Json(errorResponse);
             }
         }
 

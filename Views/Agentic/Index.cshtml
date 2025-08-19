@@ -95,6 +95,7 @@
     </div>
 </div>
 
+<script src="~/js/search-results-renderer.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         console.log('Agentic search page loaded');
@@ -237,6 +238,19 @@
         }
 
         function displayAgenticResults(response) {
+            const resultsElement = document.getElementById('searchResults');
+            if (!resultsElement) return;
+
+            // Use the new search results renderer
+            if (window.searchResultsRenderer) {
+                searchResultsRenderer.renderFormattedResponse(response, resultsElement);
+            } else {
+                // Fallback to the existing complex display logic
+                displayAgenticResultsFallback(response, resultsElement);
+            }
+        }
+        
+        function displayAgenticResultsFallback(response, resultsElement) {
             let resultContent = '';
             let activityContent = '';
             let referencesContent = '';
@@ -593,6 +607,8 @@
                 }, 200);
             }
         }
+        
+        } // End of displayAgenticResultsFallback function
         
         function showToast(message, type) {
             const toastHtml = `

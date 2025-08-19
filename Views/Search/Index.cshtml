@@ -151,6 +151,7 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/search-results-renderer.js?v=@DateTime.Now.Ticks"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             
@@ -189,7 +190,7 @@
                 let endpoint, requestBody;
                 if (searchType === 'agentic') {
                     endpoint = '/agentic/search';
-                    requestBody = JSON.stringify({ query: query });
+                    requestBody = JSON.stringify({ Query: query });
                 } else if (searchType === 'dataverse') {
                     endpoint = '/search/dataverse';
                     const dataverseToken = document.getElementById('dataverseToken')?.value.trim() || '';
@@ -256,6 +257,17 @@
                 const resultsElement = document.getElementById('searchResults');
                 if (!resultsElement) return;
 
+                // Use the new search results renderer
+                if (window.searchResultsRenderer) {
+                    searchResultsRenderer.renderFormattedResponse(response, resultsElement);
+                } else {
+                    // Fallback to basic display
+                    displayResultsFallback(response, searchType, resultsElement);
+                }
+            }
+
+            // Fallback display function for compatibility
+            function displayResultsFallback(response, searchType, resultsElement) {
                 let searchTypeLabel, searchTypeIcon;
                 if (searchType === 'agentic') {
                     searchTypeLabel = 'Agentic AI Search';
@@ -268,7 +280,11 @@
                     searchTypeIcon = 'fa-robot';
                 }
 
-                if (response.success && response.result) {
+                if (response.success || response.Success) {
+                    const resultContent = typeof response.result === 'string' 
+                        ? response.result 
+                        : `<pre class="bg-light p-3 rounded">${JSON.stringify(response.result, null, 2)}</pre>`;
+                    
                     const resultHtml = `
                         <div class="search-results">
                             <div class="results-header bg-gradient-primary text-white p-4 rounded-top">
@@ -279,7 +295,7 @@
                             </div>
                             <div class="results-content p-4 bg-white rounded-bottom shadow">
                                 <div class="search-result-content">
-                                    ${formatSearchResult(response.result, searchType)}
+                                    ${resultContent}
                                 </div>
                             </div>
                         </div>
@@ -289,20 +305,9 @@
                     resultsElement.innerHTML = `
                         <div class="alert alert-info border-0 rounded-4">
                             <i class="fas fa-info-circle me-2"></i>
-                            No results found. Please try a different search query.
+                            ${response.error || response.Error || 'No results found. Please try a different search query.'}
                         </div>
                     `;
-                }
-            }
-
-            // Format search result based on type
-            function formatSearchResult(result, searchType) {
-                if (typeof result === 'string') {
-                    return result;
-                } else if (typeof result === 'object') {
-                    return `<pre class="bg-light p-3 rounded">${JSON.stringify(result, null, 2)}</pre>`;
-                } else {
-                    return result.toString();
                 }
             }
 

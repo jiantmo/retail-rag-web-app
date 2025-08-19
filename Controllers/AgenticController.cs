@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using retail_rag_web_app.Services;
+using retail_rag_web_app.Models;
+using System.Diagnostics;
 
 namespace retail_rag_web_app.Controllers
 {
@@ -7,11 +9,16 @@ namespace retail_rag_web_app.Controllers
     public class AgenticController : Controller
     {
         private readonly AgenticRetrievalService _agenticService;
+        private readonly ResponseFormatterService _formatterService;
         private readonly ILogger<AgenticController> _logger;
 
-        public AgenticController(AgenticRetrievalService agenticService, ILogger<AgenticController> logger)
+        public AgenticController(
+            AgenticRetrievalService agenticService, 
+            ResponseFormatterService formatterService,
+            ILogger<AgenticController> logger)
         {
             _agenticService = agenticService;
+            _formatterService = formatterService;
             _logger = logger;
         }
 
@@ -24,24 +31,53 @@ namespace retail_rag_web_app.Controllers
         [HttpPost("search")]
         public async Task<IActionResult> Search([FromBody] AgenticSearchRequest request)
         {
+            var stopwatch = Stopwatch.StartNew();
+            
             try
             {
                 if (request == null || string.IsNullOrWhiteSpace(request.Query))
                 {
-                    return BadRequest("Invalid search request.");
+                    return BadRequest(new FormattedSearchResponse
+                    {
+                        Success = false,
+                        Error = "Invalid search request.",
+                        SearchType = "Agentic AI Search",
+                        Query = request?.Query ?? ""
+                    });
                 }
 
                 _logger.LogInformation("Processing agentic search query: {Query}", request.Query);
 
-                // Use the new formatted retrieval method
-                var formattedResult = await _agenticService.AgenticRetrieveFormattedAsync(request.Query, request.SystemPrompt);
+                // Use the AgenticRetrieveAsync method to get raw response
+                var rawResponseJson = await _agenticService.AgenticRetrieveAsync(request.Query, request.SystemPrompt);
+                stopwatch.Stop();
 
-                return Json(new { success = true, result = formattedResult });
+                // Format the response using the formatter service
+                var formattedResponse = _formatterService.FormatAgenticResponse(
+                    rawResponseJson, 
+                    request.Query, 
+                    (int)stopwatch.ElapsedMilliseconds);
+
+                return Json(formattedResponse);
             }
             catch (Exception ex)
             {
+                stopwatch.Stop();
                 _logger.LogError(ex, "Error processing agentic search request: {Error}", ex.Message);
-                return Json(new { success = false, error = "An error occurred while processing your request." });
+                
+                var errorResponse = new FormattedSearchResponse
+                {
+                    Success = false,
+                    Error = "An error occurred while processing your request.",
+                    SearchType = "Agentic AI Search",
+                    Query = request?.Query ?? "",
+                    Metadata = new SearchMetadata
+                    {
+                        ProcessingTimeMs = (int)stopwatch.ElapsedMilliseconds
+                    }
+                };
+                
+                return Json(errorResponse);
             }
         }
 
