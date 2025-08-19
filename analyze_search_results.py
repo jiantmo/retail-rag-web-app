@@ -12,7 +12,7 @@ import math
 from collections import defaultdict, Counter
 from datetime import datetime
 from typing import Dict, List, Any, Tuple
-from improved_relevance_scorer import ImprovedRelevanceScorer
+from unified_relevance_scorer import UnifiedRelevanceScorer
 
 class EnhancedSearchAnalyzer:
     """
@@ -26,7 +26,7 @@ class EnhancedSearchAnalyzer:
     """
     
     def __init__(self):
-        self.relevance_scorer = ImprovedRelevanceScorer()
+        self.relevance_scorer = UnifiedRelevanceScorer()
         
     def analyze_jsonl_results(self, jsonl_file_path: str) -> Dict[str, Any]:
         """
@@ -177,10 +177,10 @@ class EnhancedSearchAnalyzer:
             if not detailed_results:
                 continue
             
-            # Calculate relevance scores using improved scorer
+            # Calculate relevance scores using unified scorer
             relevance_scores = []
             for search_item in detailed_results:
-                score = self.relevance_scorer.score_result_relevance(search_item, test_context)
+                score = self.relevance_scorer.score_result_relevance(search_item, test_context, 'dataverse')
                 relevance_scores.append(score)
             
             # Count relevant items and exact matches
